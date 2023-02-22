@@ -68,10 +68,6 @@ make
 sudo make install
 sudo ldconfig /usr/local/lib/
 ```
-Finally to execute the agent on the offboard computer
-```
-MicroXRCEAgent udp4 -p 8888
-```
 
 ## ROS2 workspace setup
 We need to create a workspace to let ROS know the structure of PX4 messages. We need to clone two repositories [PX4-msgs](https://github.com/PX4/px4_msgs#PX4-msgs) and [PX4-ros-com](https://github.com/PX4/px4_ros_com#PX4-ros-com) 
@@ -100,30 +96,18 @@ Finally source the setup file
 source install/local_setup.bash
 ```
 
-### Example
-Using 3 different terminals, we run in each one command:
-```
-MicroXRCEAgent udp4 -p 8888
-```
-```
-cd path/to/PX4
-make px4_sitl gazebo-classic
-```
-```
-cd ~/workspace
-ros2 launch px4_ros_com sensor_combined_listener.launch.py
-```
-
-
-
-# uav_config
-Repository containing docs to install and run the uav simulation using px4, ros2 and gazebo
-
 ## Offboard Example
 
-Open Terminator app and start 4 terminals. In each one of them first source the setup file of px4_ros2 workspace.
+First, clone the offboard package inside the workspace folder and build it.
 ```
-cd px4_ros2_demo_ws
+cd ~/workspace/src/
+mkdir src
+git clone https://github.com/Jaeyoung-Lim/px4-offboard.git src/px4-offboard
+colcon
+```
+Open [Terminator](https://github.com/gnome-terminator/terminator/blob/master/INSTALL.md) app and start 4 terminals. In each one of them first source the setup file of px4_ros2 workspace.
+```
+cd ~/workspace
 source install/local_setup.sh
 ```
 On the first one, start the simulation of Gx 500 quadrotor inside Gazebo Garden.
@@ -131,10 +115,11 @@ On the first one, start the simulation of Gx 500 quadrotor inside Gazebo Garden.
 cd PX4-Autopilot
 make px4_sitl gz_x500
 ```
-On the second one, start the micro-ROS agent:
+On the second one, execute the XRCEAgent as follows:
 ```
-ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
+MicroXRCEAgent udp4 -p 8888
 ```
+
 On third one check first the topic list and then check that the vehicle_status publishes something:
 ```
 ros2 topic list
