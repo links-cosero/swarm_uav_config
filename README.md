@@ -74,6 +74,45 @@ MicroXRCEAgent udp4 -p 8888
 ```
 
 ## ROS2 workspace setup
+We need to create a workspace to let ROS know the structure of PX4 messages. We need to clone two repositories [PX4-msgs](https://github.com/PX4/px4_msgs#PX4-msgs) and [PX4-ros-com](https://github.com/PX4/px4_ros_com#PX4-ros-com) 
+Example of creation of workspace:
+```
+mkdir ~/workspace/src/
+cd workspace/src
+git clone https://github.com/PX4/px4_msgs.git
+git clone https://github.com/PX4/px4_ros_com.git
+```
+Install Colcon if not present
+```
+sudo sh -c 'echo "deb [arch=amd64,arm64] http://repo.ros2.org/ubuntu/main `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list'
+curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+sudo apt update
+sudo apt install python3-colcon-common-extensions
+```
+Compile the source code with Colcon
+```
+cd ~/workspace/
+source /opt/ros/humble/setup.bash
+colcon build
+```
+Finally source the setup file
+```
+source install/local_setup.bash
+```
+
+### Example
+Using 3 different terminals, we run in each one command:
+```
+MicroXRCEAgent udp4 -p 8888
+```
+```
+cd path/to/PX4
+make px4_sitl gazebo-classic
+```
+```
+cd ~/workspace
+ros2 launch px4_ros_com sensor_combined_listener.launch.py
+```
 
 
 
