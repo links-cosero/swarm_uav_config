@@ -10,7 +10,8 @@ source install/local_setup.sh
 ```
 On the first one, start the simulation of Gx 500 quadrotor inside Gazebo Garden.
 ```
-make px4_sitl gx_500
+cd PX4-Autopilot
+make px4_sitl gz_x500
 ```
 On the second one, start the micro-ROS agent:
 ```
@@ -21,12 +22,15 @@ On third one check first the topic list and then check that the vehicle_status p
 ros2 topic list
 ros2 topic echo /fmu/out/vehicle_status
 ```
-On the same terminal, run the offboard example:
+Ctrl+C to stop the topic echo. On the same terminal, run the offboard example:
 ```
 ros2 launch px4_offboard offboard_position_control.launch.py
 ```
 
 On the forth terminal, open QGroundControl which should connect automatically.
+```
+./QGroundControl.AppImage
+```
 To allow arming, we need to tell PX4 that it's fine to do offboard control without RC connected.
 Go to **Vehicle Setup**, **Parameters**, and set [COM_RCL_EXCEPT](https://docs.px4.io/main/en/advanced_config/parameter_reference.html#COM_RCL_EXCEPT) to 4 which means Offboard is ignored.
 Then go back and click on the mode and switch it to **Offboard**. Then, click on **Ready to fly** and click **Arm**.
