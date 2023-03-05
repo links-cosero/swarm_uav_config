@@ -1,3 +1,6 @@
+.vscode/
+
+/*Colcon build*/
 build/
 install/
 log/
