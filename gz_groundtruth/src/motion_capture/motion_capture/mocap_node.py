@@ -8,6 +8,7 @@ from geometry_msgs.msg import (
     PoseStamped)
 
 import subprocess
+from math import sqrt
 
 class MocapNode (Node):
     def __init__(self) -> None:
@@ -38,20 +39,22 @@ class MocapNode (Node):
         # Change ref fram to FLU and publish msg
         self.vehicle_pose_msg = PoseStamped()
         self.vehicle_pose_msg.header.frame_id='map'
+        # Rotation from ENU to FLU reference frame -> Rot_z(-90) done both to 
+        # position and to orientation. 
+
         # Position
         self.vehicle_pose_msg.pose.position.x =  self.gz_pose_msg.position.y
         self.vehicle_pose_msg.pose.position.y = -self.gz_pose_msg.position.x
         self.vehicle_pose_msg.pose.position.z =  self.gz_pose_msg.position.z
         # Orientation
-        # self.vehicle_pose_msg.pose.orientation = self.gz_pose_msg.orientation
         x_gz = self.gz_pose_msg.orientation.x
         y_gz = self.gz_pose_msg.orientation.y
         z_gz = self.gz_pose_msg.orientation.z
         w_gz = self.gz_pose_msg.orientation.w
-        self.vehicle_pose_msg.pose.orientation.x = (- x_gz + y_gz)/2
-        self.vehicle_pose_msg.pose.orientation.y = (- y_gz - x_gz)/2
-        self.vehicle_pose_msg.pose.orientation.z = (- z_gz + w_gz)/2
-        self.vehicle_pose_msg.pose.orientation.w = (- w_gz - z_gz)/2
+        self.vehicle_pose_msg.pose.orientation.x = (- x_gz - y_gz) * sqrt(2)/2
+        self.vehicle_pose_msg.pose.orientation.y = (- y_gz + x_gz) * sqrt(2)/2
+        self.vehicle_pose_msg.pose.orientation.z = (- z_gz + w_gz) * sqrt(2)/2
+        self.vehicle_pose_msg.pose.orientation.w = (- w_gz - z_gz) * sqrt(2)/2
 
         self.pose_pub.publish(self.vehicle_pose_msg)
 
