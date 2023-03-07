@@ -8,11 +8,15 @@ import rclpy
 import time
 from rclpy.node import Node
 from rclpy.clock import Clock
+from rclpy import utilities
 
 from px4_msgs.msg import OffboardControlMode
 from px4_msgs.msg import TrajectorySetpoint
 from px4_msgs.msg import VehicleCommand
 from px4_msgs.msg import VehicleControlMode
+
+
+
 
 
 class OffboardControl(Node):
@@ -25,51 +29,49 @@ class OffboardControl(Node):
         self.vehicle_command_publisher_ = self.create_publisher(VehicleCommand,"/fmu/in/vehicle_command", 10)
 
         self.offboard_setpoint_counter_ = 0
+        # Stato missione per macchina a stati
+        self.mission_state = 0
+        # Waypoint corrente pubblicato da timer_offboard_cb()
+        self.current_waypoint = [0.0, 0.0, -5.0]
 
-        timer_period = 1  # secs
-        self.timer_ = self.create_timer(timer_period, self.timer_callback)
-        # self.mission()
-
+        # Timers
+        self.timer_offboard = self.create_timer(0.02, self.timer_offboard_cb)
+        self.timer_mission = self.create_timer(8, self.mission)
+    
     def mission(self):
-        self.get_logger().info("Change to Offboard mode")
-        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1., 6.)
-        time.sleep(10)
-        print("Start Mission")
-        self.publish_offboard_control_mode()
-        self.publish_trajectory_setpoint()
-        time.sleep(10)
-        # Arm the vehicle
-        self.arm()
-        time.sleep(20)
-        self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_PRECLAND)
-        self.disarm()
-        print("Mission finished")
+        """ Funzione mission organizzata come macchina a stati """
 
-
-
-    def timer_callback(self):
-        
-        if (self.offboard_setpoint_counter_ == 10):
-            # Change to Offboard mode after 10 setpoints
-            self.get_logger().info("Change to Offboard mode")
+        if self.mission_state == 0:
+            """ Arming and takeoff to 1st waypoint """
+            self.get_logger().info("Mission started")
             self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1., 6.)
-            # Arm the vehicle
             self.arm()
-            
-        if (self.offboard_setpoint_counter_ == 20):
+            self.get_logger().info("Vehicle armed")
+            # Imposta il primo waypoint
+            self.current_waypoint = [0.0, 0.0, -5.0]
+            self.mission_state = 1
+
+        elif self.mission_state == 1:
+            """Waypoint 2"""
+            self.get_logger().info("Second waypoint")
+            # Imposta secondo waypoint
+            self.current_waypoint = [2.0, 2.0, -4.0]
+            self.mission_state = 2
+
+        elif self.mission_state == 2:
+            """Landing"""
+            self.get_logger().info("Landing request")
             self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_PRECLAND)
-            
-
-        if (self.offboard_setpoint_counter_ == 50):
-            self.disarm()            
-
-        # Offboard_control_mode needs to be paired with trajectory_setpoint
+            self.mission_state = 3
+        
+        elif self.mission_state == 3:
+            self.disarm()
+            self.get_logger().info("Mission finished")
+    
+    def timer_offboard_cb(self):
+        # Funzione richiamata ogni 20ms e invia i seguenti messaggi
         self.publish_offboard_control_mode()
         self.publish_trajectory_setpoint()
-        
-
-        # stop the counter after reaching 11
-        self.offboard_setpoint_counter_ += 1
 
 
     # Arm the vehicle
@@ -96,7 +98,7 @@ class OffboardControl(Node):
         msg.body_rate = False
         msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
         self.offboard_control_mode_publisher_.publish(msg)
-        self.get_logger().info("Offboard Control Mode published")
+        # self.get_logger().info("Offboard Control Mode published")
 
     '''
 	Publish a trajectory setpoint
@@ -106,11 +108,11 @@ class OffboardControl(Node):
 
     def publish_trajectory_setpoint(self):
         msg = TrajectorySetpoint()
-        msg.position = [0.0, 0.0, -5.0] 
+        msg.position = self.current_waypoint# [0.0, 0.0, -5.0] 
         msg.yaw = -3.14  # [-PI:PI]
         msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
         self.trajectory_setpoint_publisher_.publish(msg)
-        self.get_logger().info("Trajectory Setpoint published")
+        # self.get_logger().info("Trajectory Setpoint published")
 
     '''
     Publish vehicle commands
@@ -135,7 +137,7 @@ def main(args=None):
     rclpy.init(args=args)
     print("Starting offboard control node...\n")
     offboard_control = OffboardControl()
-    rclpy.spin(offboard_control)
+    rclpy.spin(offboard_control, )
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
