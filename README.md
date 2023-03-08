@@ -126,10 +126,10 @@ cd ..
 colcon build
 ```
 Close the terminal.
-Install [Terminator](https://github.com/gnome-terminator/terminator/blob/master/INSTALL.md) from the link. Then, open the app and start 4 terminals. In each one of them first source the local setup file of the workspace.
+Install [Terminator](https://github.com/gnome-terminator/terminator/blob/master/INSTALL.md) from the link. Then, open the app and start 4 terminals. In each one of them first source the local setup file of the workspace or instead write the following command to source automaticaly everytime a new shell is opened.
 ```
 cd ~/uav_config_ws
-source install/local_setup.bash
+source /home/$user/uav_config_ws/install/local_setup.bash
 ```
 **Warning** if instead local_setup.sh is sourced the ros2 topic list command will not see the published topic so be careful!
 
