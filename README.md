@@ -60,7 +60,7 @@ make clean
 make px4_sitl gz_x500
 ```
 
-## ROS-PX4 bridge: MicroXRCEAgent
+## ROS-PX4 bridge: MicroXRCEAgent installation
 See the [docs](https://docs.px4.io/main/en/ros/ros2_comm.html) for more details. Below are the steps to install the bridge.
 
 PX4 communicates with MicroXRCEAgent, that is a middleware executed on the offboard computer. XRCEAgent communicate with PX4 with a UPD port and then transforms the uORB messages in suitable ROS2 topics.
@@ -81,12 +81,23 @@ sudo make install
 sudo ldconfig /usr/local/lib/
 ```
 
+##QGroundControl installation
+Enter the following commands to install properly the program.
+```
+sudo usermod -a -G dialout $USER
+sudo apt-get remove modemmanager -y
+sudo apt install gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-gl -y
+sudo apt install libqt5gui5 -y
+sudo apt install libfuse2 -y
+chmod +x ./QGroundControl.AppImage
+```
+
 ## ROS2 workspace setup
 We need to create a workspace to let ROS know the structure of PX4 messages. We need to clone two repositories [PX4-msgs](https://github.com/PX4/px4_msgs#PX4-msgs) and [PX4-ros-com](https://github.com/PX4/px4_ros_com#PX4-ros-com) 
 
 ```
-mkdir ~/uav_config_ws/src/
-cd uav_config_ws/src
+mkdir -p ~/uav_config_ws/src/
+cd ~/uav_config_ws/src
 git clone https://github.com/PX4/px4_msgs.git
 git clone https://github.com/PX4/px4_ros_com.git
 ```
@@ -99,12 +110,8 @@ sudo apt install python3-colcon-common-extensions
 ```
 Compile the source code with Colcon
 ```
-cd ~/uav_config_ws/
+cd ..
 colcon build
-```
-Finally source the setup file
-```
-source install/local_setup.sh
 ```
 
 All the programs, packages and their dependencies are now fully installed. You can proceed to the following steps in order to setup and launch the simulation demo.
@@ -116,16 +123,19 @@ First, clone the offboard package inside the workspace folder and build it.
 cd ~/uav_config_ws/src/
 git clone https://github.com/Jaeyoung-Lim/px4-offboard.git src/px4-offboard
 cd ..
-colcon --packages-select px4-offboard
+colcon build
 ```
-Install [Terminator](https://github.com/gnome-terminator/terminator/blob/master/INSTALL.md) from thelink. Then, open the app and start 4 terminals. In each one of them first source the setup file of px4_ros2 workspace.
+Close the terminal.
+Install [Terminator](https://github.com/gnome-terminator/terminator/blob/master/INSTALL.md) from the link. Then, open the app and start 4 terminals. In each one of them first source the local setup file of the workspace.
 ```
 cd ~/uav_config_ws
-source install/local_setup.sh
+source install/local_setup.bash
 ```
+**Warning** if instead local_setup.sh is sourced the ros2 topic list command will not see the published topic so be careful!
+
 On the first one, start the simulation of Gx 500 quadrotor inside Gazebo Garden.
 ```
-cd PX4-Autopilot
+cd ~/PX4-Autopilot
 make px4_sitl gz_x500
 ```
 On the second one, execute the XRCEAgent as follows:
@@ -162,26 +172,26 @@ warning: format ‘%llu’ expects argument of type ‘long long unsigned int’
 ...
 ```
 
-In order to solve the warning go inside px4_ros_com/examples/advertisers/debug_advertiser.cpp and change %llu to %lu.
-Next do:
+In order to solve the warning go inside px4_ros_com/src/examples/advertisers/debug_vect_advertiser.cpp and change %llu to %lu in Line 66.
+Now build again:
 ```
 cd ~/uav_config_ws
 colcon build --packages-select px4_ros_com 
 ```
 And the package should build without stderr.
 
-When building px4-offboard a warning may arise as follows.
+When building px4_offboard a warning may arise as follows.
 ```
 ...
 UserWarning: Usage of dash-separated 'script-dir' will not be supported in future versions. Please use the underscore name 'script_dir' instead
 UserWarning: Usage of dash-separated 'install-scripts' will not be supported in future versions. Please use the underscore name 'install_scripts' 
---- stderr: px4-offboard     
+--- stderr: px4_offboard     
 ```
 
 Go inside the package px4-offboard and change script-dir to script_dir and install-scripts to install_scripts.
 Next do:
 ```
 cd ~/uav_config_ws
-colcon build --packages-select px4-offboard 
+colcon build --packages-select px4_offboard 
 ```
 And the package should build without stderr.
