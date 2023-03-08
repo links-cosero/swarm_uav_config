@@ -1,4 +1,8 @@
-# ROS2 Humble installation
+This repository was build as a reference for the setup and simulation of a mission done by a drone using PX4 and ROS2. In order to correctly launch the mission scripts for the simulatated UAV, we need to first install and configure the needed programs and packages.
+
+## ROS2 Humble installation
+See the [docs](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html) for more details. Below there are listed all the needed command to install ROS2 humble.
+
 Setup locale
 ```
 sudo apt update && sudo apt install locales
@@ -16,21 +20,39 @@ sudo apt update && sudo apt install curl
 sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
 ```
-Install of ROS2 packages
+Install of ROS2 packages 
 ```
 sudo apt update
 sudo apt upgrade
 sudo apt install ros-humble-desktop
 ```
 
-# PX4 and Gazebo installation
-https://docs.px4.io/main/en/sim_gazebo_gz/
+Configure the environment
+```
+echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+printenv | grep -i ROS 
+```
+Check that:
+```
+ROS_VERSION=2
+ROS_PYTHON_VERSION=3
+ROS_DISTRO=humble
+```
+Finally, export the following two variables
+```
+echo "export ROS_DOMAIN_ID=0" >> ~/.bashrc
+echo "export ROS_LOCALHOST_ONLY=1" >> ~/.bashrc
+```
+## PX4 and Gazebo installation
+See the [docs](https://docs.px4.io/main/en/sim_gazebo_gz/) for more details. Below there are the steps to follow in order to correctly install PX4 and its dependencies.
 
 Install development enviroment for Ubuntu 22.04 LTS. Clone the repository of PX4 in any folder
 ```
 git clone https://github.com/PX4/PX4-Autopilot.git --recursive
 bash ./PX4-Autopilot/Tools/setup/ubuntu.sh
 ```
+The last command automaticaly install Gazebo Garden and its dependencies on Ubuntu 22.04. Restart the PC on completition.
+
 Install Gazebo Garden
 ```
 sudo apt-get update
