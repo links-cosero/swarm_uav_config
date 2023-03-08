@@ -1,4 +1,4 @@
-This repository was build as a reference for the setup and simulation of a mission done by a drone using PX4 and ROS2. In order to correctly launch the mission scripts for the simulatated UAV, we need to first install and configure the needed programs and packages.
+This repository was build as a reference for the setup and simulation of a mission done by a drone using PX4 and ROS2. In order to correctly launch the mission scripts for the simulated UAV, we need to first install and configure some programs and packages.
 
 ## ROS2 Humble installation
 See the [docs](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html) for more details. Below there are listed all the needed command to install ROS2 humble.
@@ -53,15 +53,6 @@ bash ./PX4-Autopilot/Tools/setup/ubuntu.sh
 ```
 The last command automaticaly install Gazebo Garden and its dependencies on Ubuntu 22.04. Restart the PC on completition.
 
-Install Gazebo Garden
-```
-sudo apt-get update
-sudo apt-get install lsb-release wget gnupg
-sudo wget https://packages.osrfoundation.org/gazebo.gpg -O /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
-sudo apt-get update
-sudo apt-get install gz-garden
-```
 Create a test simulation with PX4 and Gazebo. It should open Gazebo with a 4 rotor drone and can be controlled from the interactive PX4 console.
 ```
 cd /path/to/PX4-Autopilot
@@ -69,12 +60,11 @@ make clean
 make px4_sitl gz_x500
 ```
 
-# ROS-PX4 bridge
-https://docs.px4.io/main/en/ros/ros2_comm.html
+## ROS-PX4 bridge: MicroXRCEAgent
+See the [docs](https://docs.px4.io/main/en/ros/ros2_comm.html) for more details. Below are the steps to install the bridge.
 
 PX4 communicates with MicroXRCEAgent, that is a middleware executed on the offboard computer. XRCEAgent communicate with PX4 with a UPD port and then transforms the uORB messages in suitable ROS2 topics.
 
-## MicroXRCEAgent installation
 Install needed python packages
 ```
 sudo pip3 install -U empy pyros-genmsg setuptools
@@ -93,10 +83,10 @@ sudo ldconfig /usr/local/lib/
 
 ## ROS2 workspace setup
 We need to create a workspace to let ROS know the structure of PX4 messages. We need to clone two repositories [PX4-msgs](https://github.com/PX4/px4_msgs#PX4-msgs) and [PX4-ros-com](https://github.com/PX4/px4_ros_com#PX4-ros-com) 
-Example of creation of workspace:
+
 ```
-mkdir ~/workspace/src/
-cd workspace/src
+mkdir ~/uav_config_ws/src/
+cd uav_config_ws/src
 git clone https://github.com/PX4/px4_msgs.git
 git clone https://github.com/PX4/px4_ros_com.git
 ```
@@ -109,27 +99,28 @@ sudo apt install python3-colcon-common-extensions
 ```
 Compile the source code with Colcon
 ```
-cd ~/workspace/
-source /opt/ros/humble/setup.bash
+cd ~/uav_config_ws/
 colcon build
 ```
 Finally source the setup file
 ```
-source install/local_setup.bash
+source install/local_setup.sh
 ```
+
+All the programs, packages and their dependencies are now fully installed. You can proceed to the following steps in order to setup and launch the simulation demo.
 
 ## Offboard Example
 
 First, clone the offboard package inside the workspace folder and build it.
 ```
-cd ~/workspace/src/
-mkdir src
+cd ~/uav_config_ws/src/
 git clone https://github.com/Jaeyoung-Lim/px4-offboard.git src/px4-offboard
-colcon
+cd ..
+colcon --packages-select px4-offboard
 ```
-Open [Terminator](https://github.com/gnome-terminator/terminator/blob/master/INSTALL.md) app and start 4 terminals. In each one of them first source the setup file of px4_ros2 workspace.
+Install [Terminator](https://github.com/gnome-terminator/terminator/blob/master/INSTALL.md) from thelink. Then, open the app and start 4 terminals. In each one of them first source the setup file of px4_ros2 workspace.
 ```
-cd ~/workspace
+cd ~/uav_config_ws
 source install/local_setup.sh
 ```
 On the first one, start the simulation of Gx 500 quadrotor inside Gazebo Garden.
@@ -161,3 +152,36 @@ Go to **Vehicle Setup**, **Parameters**, and set [COM_RCL_EXCEPT](https://docs.p
 Then go back and click on the mode and switch it to **Offboard**. Then, click on **Ready to fly** and click **Arm**.
 
 It should now take off and start flying a circle, as commanded by the offboard Python script.
+
+## Troubleshooting
+When building px4_ros_com a warning may arise like follows.
+```
+...
+warning: format ‘%llu’ expects argument of type ‘long long unsigned int’, but argument 5 has type ‘px4_msgs::msg::DebugVect_<std::allocator<void> >::_timestamp_type’ {aka ‘long unsigned int’}
+--- stderr: px4_ros_com
+...
+```
+
+In order to solve the warning go inside px4_ros_com/examples/advertisers/debug_advertiser.cpp and change %llu to %lu.
+Next do:
+```
+cd ~/uav_config_ws
+colcon build --packages-select px4_ros_com 
+```
+And the package should build without stderr.
+
+When building px4-offboard a warning may arise as follows.
+```
+...
+UserWarning: Usage of dash-separated 'script-dir' will not be supported in future versions. Please use the underscore name 'script_dir' instead
+UserWarning: Usage of dash-separated 'install-scripts' will not be supported in future versions. Please use the underscore name 'install_scripts' 
+--- stderr: px4-offboard     
+```
+
+Go inside the package px4-offboard and change script-dir to script_dir and install-scripts to install_scripts.
+Next do:
+```
+cd ~/uav_config_ws
+colcon build --packages-select px4-offboard 
+```
+And the package should build without stderr.
