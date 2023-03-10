@@ -20,7 +20,7 @@ class MocapNode (Node):
         # Publishers
         self.pose_pub = self.create_publisher(PoseStamped, "/x500/pose", 10)
         self.path_pub = self.create_publisher(Path, "/x500/path", 10)
-        self.mocap_odom_pub = self.create_publisher(VehicleOdometry, "/fmu/in/vehicle_mocap_odometry", 10)
+        self.mocap_odom_pub = self.create_publisher(VehicleOdometry, "/fmu/in/vehicle_visual_odometry", 10)
         # Messages
         self.vehicle_path_msg = Path()
         self.vehicle_path_msg.header.frame_id = 'map'
@@ -30,6 +30,7 @@ class MocapNode (Node):
         # Timers
         self.get_timestamp = lambda : int(Clock().now().nanoseconds / 1000)
 
+        self.path_cnt = 0
         self.launch_ros_gz_bridge("/world/default/pose/info","geometry_msgs/msg/PoseArray","gz.msgs.Pose_V")
 
     def listener_cb(self, msg: PoseArray):
@@ -43,11 +44,13 @@ class MocapNode (Node):
         self.vehicle_pose_msg = self.gazebo_to_flu_tf(self.gz_pose_msg)
         self.pose_pub.publish(self.vehicle_pose_msg)
         # Publish path msg
-        self.vehicle_path_msg.poses.append(self.vehicle_pose_msg)
-        self.path_pub.publish(self.vehicle_path_msg)
+        if self.path_cnt == 0:
+            self.vehicle_path_msg.poses.append(self.vehicle_pose_msg)
+            self.path_pub.publish(self.vehicle_path_msg)
+        self.path_cnt = (self.path_cnt + 1) % 10
         # Create mocap odometry msg and publish to PX4
-        self.mocap_odom_msg = self.create_odometry_msg(self.vehicle_pose_msg)
-        # self.mocap_odom_pub.publish(self.mocap_odom_msg)
+        self.mocap_odom_msg = self.create_odometry_msg(self.vehicle_pose_msg.pose)
+        self.mocap_odom_pub.publish(self.mocap_odom_msg)
 
     def launch_ros_gz_bridge(self, topic:str, ros_type:str, gz_type:str):
         """ Launch subprocess to bridge Gazebo and ROS2 """
@@ -83,10 +86,18 @@ class MocapNode (Node):
 
     def flu_to_ned_tf(self, pose : Pose) -> Pose:
         """
-        Transform a FLU frame into NED
+        Transform a FLU frame into NED => Rot_x(180°)
+        Rotate quaternion: (i)*(xi+yj+zk+w) = -x +yk -zj +wi
         """
-        # TODO: da scrivere
-        pass 
+        ned_pose = Pose()
+        ned_pose.position.x =  pose.position.x
+        ned_pose.position.y = -pose.position.y
+        ned_pose.position.z = -pose.position.z
+        ned_pose.orientation.x =  pose.orientation.w        
+        ned_pose.orientation.y = -pose.orientation.z
+        ned_pose.orientation.z =  pose.orientation.y
+        ned_pose.orientation.w = -pose.orientation.x
+        return ned_pose
 
     
     def create_odometry_msg(self, pose : Pose) -> VehicleOdometry:
@@ -97,8 +108,13 @@ class MocapNode (Node):
         odom_msg.timestamp = self.get_timestamp()
         odom_msg.pose_frame = VehicleOdometry.POSE_FRAME_NED
         ned_pose = self.flu_to_ned_tf(pose)
-        odom_msg.position = ned_pose.position
-        odom_msg.q = ned_pose.orientation
+        odom_msg.position = [ned_pose.position.x, 
+                            ned_pose.position.y, 
+                            ned_pose.position.z]
+        odom_msg.q = [  ned_pose.orientation.x  ,
+                        ned_pose.orientation.y ,                      
+                        ned_pose.orientation.z ,
+                        ned_pose.orientation.w]                      
         return odom_msg
 
 def main(args=None):

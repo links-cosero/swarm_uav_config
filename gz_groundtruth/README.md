@@ -95,3 +95,17 @@ Questo pacchetto è stato scritto interamente da capo, i compiti svolti al suo i
 Per eseguire questo pacchetto, dopo aver avviato la simulazione `make px4_sitl gz_x500` si esegue il comando `ros2 launch px4_offboard offboard_position_control.launch.p`, poi come nel tutorial iniziale bisogna ancora impostare manualmente la modalità offboard e armare il drone. Automaticamente si aprirà anche Rviz dove potremmo vedere la posizione stimata dall’autopilota (**linea verde**) e la posizione ricavata direttamente da Gazebo (**linea rossa**).  
 
 Per la configurazione di Rviz ho sovrascritto il file `gz_groundtruth/src/px4-offboard/resource/visualize.rviz` dal menù di rviz facendo “salva con nome”, dopo aver aggiunto le nuove tracce.
+
+## Configurazione PX4
+https://dev.px4.io/v1.11_noredirect/en/ros/external_position_estimation.html
+
+I dati di odometria visuale sono inviati a PX4 tramite il messaggio `vehicle_visual_odometry` in quanto è l'unico supportato dal filtro EKF2 (altrimenti va usato LPE). Vengono per ora inviati nel messaggio solo informazioni sulla posizione e orientamento e non sulle velocità.
+
+In QGroundControl ho impostato alcuni parametri di EKF2 per la fusione della odometria visuale:
+- EKF2_AID_MASK = 2
+- EFK2_HGT_MODE = Vision
+- EKF2_EVA_NOISE = 2.87 deg
+- EKF2_EVP_NOISE = 0.01 m
+- EKF2_EV_CTRL = 11
+
+Su Rviz si vede sempre una differenza tra la stima di PX4 e la posizione su Gazebo, sembra però ridotta rispetto a prima. Misurando da Rviz la differenza tra altitudini (grandezza più diversa) sembra intorno ai 20 cm. **Test fatto ancora con PX4 v1.13**
