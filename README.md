@@ -1,4 +1,5 @@
 This repository was build as a reference for the setup and simulation of a mission done by a drone using PX4 and ROS2. In order to correctly launch the mission scripts for the simulated UAV, we need to first install and configure some programs and packages.
+This repo uses Px4 v1.13.3 and gazebo classic 11.10 in order to match the firmware mounted on the drone.
 
 ## ROS2 Humble installation
 See the [docs](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html) for more details. Below there are listed all the needed command to install ROS2 humble.
@@ -51,13 +52,31 @@ Install development enviroment for Ubuntu 22.04 LTS. Clone the repository of PX4
 git clone https://github.com/PX4/PX4-Autopilot.git --recursive
 bash ./PX4-Autopilot/Tools/setup/ubuntu.sh
 ```
-The last command automaticaly install Gazebo Garden and its dependencies on Ubuntu 22.04. Restart the PC on completition.
+The last command automaticaly install Gazebo Garden and its dependencies on Ubuntu 22.04. We do this step in order to be sure that all the dependencies that px4 has with gazebo are installed, we will not use Gazebo Garden itself.
+In order to install the firmware version same as the one on the Flight controller, follow the procedure below.
 
-Create a test simulation with PX4 and Gazebo. It should open Gazebo with a 4 rotor drone and can be controlled from the interactive PX4 console.
+For our configuration, we need to first downgrade to 1.13 then install gazebo 11.10.
+Clean up first the existing version.
 ```
-cd /path/to/PX4-Autopilot
+cd ~/PX4-Autopilot
 make clean
-make px4_sitl gz_x500
+make distclean
+```
+Fetch and checkout then add the modules to match the px4 v1.11 version.
+```
+git fecth origin release/1.13
+git checkout release/1.13
+make submodulesclean
+```
+
+Install Gazebo v11 and its dependencies and start the simulation.
+Download the script from [here](https://raw.githubusercontent.com/gazebo-tooling/release-tools/master/one-line-installations/gazebo.sh). Then, source it using the following command. This will overwrite Gazebo Garden and install Gazebo 11.10.
+```
+sh gazebo.sh
+```
+Finally, run the following command to lanch the simulation.
+```
+make px4_sitl gazebo
 ```
 
 ## ROS-PX4 bridge: MicroXRCEAgent installation
