@@ -5,7 +5,9 @@ from rclpy.qos import (
     QoSReliabilityPolicy, 
     QoSHistoryPolicy)
 
-from nav_msgs.msg import Path
+from nav_msgs.msg import (
+    Path,
+    Odometry)
 from geometry_msgs.msg import (
     PoseArray, 
     Pose,
@@ -25,12 +27,12 @@ class MocapNode (Node):
     def __init__(self) -> None:
         super().__init__('mocap_node')
         qos_profile = QoSProfile(
-            reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
-            history=QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            history=QoSHistoryPolicy.KEEP_LAST,
             depth=1
         )
         # Subscribers
-        self.subscriber_ =      self.create_subscription(PoseArray, '/world/default/pose/info', self.listener_cb, 10)
+        self.subscriber_ =      self.create_subscription(Odometry, '/iris/odom', self.listener_cb, 10)
         # self.px4_odom_sub =     self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.local_pos_cb, qos_profile) # DEBUG
         self.attitude_sub =     self.create_subscription(VehicleAttitude,'/fmu/out/vehicle_attitude',self.attitude_cb,qos_profile)
         # Publishers
@@ -50,14 +52,13 @@ class MocapNode (Node):
         self.timestamp_sample = 0
 
         self.path_cnt = 0
-        self.launch_ros_gz_bridge("/world/default/pose/info","geometry_msgs/msg/PoseArray","gz.msgs.Pose_V")
 
-    def listener_cb(self, msg: PoseArray):
+    def listener_cb(self, msg: Odometry):
         # Nell'array di oggetti Pose il secondo è quello del drone a cui siamo interessati. L'ho
         # trovato a tentativi guardando i numeri più convincenti e sono sicuro sia quello perchè 
         # coincide con la visuale nella simulazione. E' ripetibile tutte le simulazioni e funziona sempre
         # ma penso valga solo per la specifica simulazione 'make px4_sitl gz_x500'. 
-        self.gz_pose_msg : Pose = msg.poses[1]
+        self.gz_pose_msg : Pose = msg.pose.pose
 
         # Change ref fram to FLU and publish msg
         self.vehicle_pose_msg = self.gazebo_to_flu_tf(self.gz_pose_msg)
@@ -81,14 +82,6 @@ class MocapNode (Node):
         # ned_pos.pose.orientation.z = float(self.mocap_odom_msg.q[2])
         # ned_pos.pose.orientation.w = float(self.mocap_odom_msg.q[3])        
         # self.ned_pose_pub.publish(ned_pos)
-
-    def launch_ros_gz_bridge(self, topic:str, ros_type:str, gz_type:str):
-        """ Launch subprocess to bridge Gazebo and ROS2 """
-
-        argument = f"{topic}@{ros_type}[{gz_type}"
-        command = "ros2 run ros_gz_bridge parameter_bridge "+argument
-        subprocess.Popen(command.split(' '))
-
 
     def gazebo_to_flu_tf(self, gz_pose: Pose) -> PoseStamped:
         """

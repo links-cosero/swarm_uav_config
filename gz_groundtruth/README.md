@@ -1,30 +1,58 @@
-# PX4 External Odometry with Gazebo
+# PX4 External Odometry with Gazebo-Classic
 
+### WORK IN PROGRESS: da rivedere ancora XRCE bridge
 **Software utilizzati:** 
 
 | Software | Version |
 | --- | --- |
-| PX4 | v1.13 |
-| Gazebo | Garden |
+| PX4 | v1.11 |
+| Gazebo | Classic v11 |
 | ROS2 | Humble |
 | Ubuntu | 22.04 LTS |
-| ros_gz_bridge | Compiled from main branch |
+| gazebo_ros_pkgs | Version from apt |
+
+# Setup gazebo_ros_pkgs
+
+Per rendere disponibili informazioni sulla posizione da gazebo sono necessari dei plugins da eseguire durante la simulazione del drone. Come primo passo dopo aver installato Gazebo-Classic v11 bisogna installare il pacchetto che rende disponibili i plugins e altre funzionalità a ROS2 (tutorial completo a [questo link](https://classic.gazebosim.org/tutorials?tut=ros2_installing&cat=connect_ros)):
+
+```bash
+sudo apt install ros-humble-gazebo-ros-pkgs
+```
+
+Il plugin necessario è chiamato “libgazebo_ros_p3d.so” e pubblica su un topic le informazioni sulla posizione di un certo oggetto nella simulazione. Per aggiungerlo bisonga modificare il file dentro usato per la simulazione `PX4-Autopilot/Tools/sitl_gazebo/models/iris/iris.sdf` (valido quindi solo per il modello di drone Iris) aggiungendo il seguente codice: 
+
+```xml
+<plugin name="gazebo_ros_p3d" filename="libgazebo_ros_p3d.so">
+	<ros>
+	  <namespace>/iris</namespace>
+	  <remapping>odom:=odom</remapping>
+	</ros>
+	<body_name>base_link</body_name>
+	<frame_name>map</frame_name>
+	<update_rate>50</update_rate>
+	<xyz_offset>0 0 0</xyz_offset>
+	<rpy_offset>0 0 0</rpy_offset>
+	<gaussian_noise>0.01</gaussian_noise>
+</plugin>
+```
+
+Io l’ho inserito alla riga 409.
+
+Una volta fatto questo si può avviare la simulazione e si potrà vedere tra i topics di ROS2 la presenza del nuovo topic `/iris/odom` . Il plugin funziona avviando un nodo ROS che pubblica questo messaggio, il la repository con il codice sorgente è visualizzabile [a questo link](https://github.com/ros-simulation/gazebo_ros_pkgs). 
 
 # Introduzione
 
-Per simulare in ambiente Gazebo un sistema di Motion Capture come il Vicon, vengono presi direttamente da gazebo i dati sulla posizione attuale del drone e resi disponibili in ambiente ROS2 facendo finta siano output del sistema Vicon. L’obiettivo è una volta che sono disponibili come topic su ROS2 possono essere inviati a PX4 sotto forma di `vehicle_visual_odometry` e integrati dall’autopilota nella stima della posizione corrente. Chiaramente data la loro precisione hanno un grande impatto sulla stima finale della posizione data dall’autopilota. Bisogna *impostare su PX4 anche alcuni parametri* come spiegato nell’ultima sezione di questo documento per far si che questi dati siano considerati nella stima della posizione. 
-
-I passi da compiere saranno quindi 2: estrarre da gazebo i dati, formattarli correttamente e inviarli al drone. 
+Per simulare in ambiente Gazebo un sistema di Motion Capture come il Vicon, vengono presi direttamente da gazebo i dati sulla posizione attuale del drone e resi disponibili in ambiente ROS2 facendo finta siano output del sistema Vicon (spiegato nella sezione precedente). L’obiettivo è una volta che sono disponibili come topic su ROS2 possono essere inviati a PX4 sotto forma di `vehicle_visual_odometry` e integrati dall’autopilota nella stima della posizione corrente. Chiaramente data la loro precisione hanno un grande impatto sulla stima finale della posizione data dall’autopilota. Bisogna *impostare su PX4 anche alcuni parametri* come spiegato nell’ultima sezione di questo documento per far si che questi dati siano considerati nella stima della posizione. 
 
 Per eseguire il presente workspace usare 3 terminali:
 
 ```python
-MicroXRCEAgent udp4 -p 8888
+MicroXRCEAgent udp4 -p 8888 # TODO: da cambiare con RTPS
 ```
 
 ```python
 cd ~/path_to_PX4/PX4-Autopilot
-make px4_sitl gz_x500
+make px4_sitl gazebo
 ```
 
 ```python
@@ -41,80 +69,10 @@ Per provare la differenza con e senza invio dei messaggi di visual_odometry comm
 
 **Attenzione: Le istruzioni riportate in seguito sono solamente una spiegazione del funzionamento del presente workspace, non servono ad eseguire il pacchetto.** 
 
-# Scaricamento dati da Gazebo
-
-All’interno dell’ambiente gazebo sono presenti dei topic (non visualizzabili da ROS) e vogliamo copiare il contenuto del topic  `/world/default/pose/info`  su un topic visualizzabile da ROS. Questo topic contiene le informazioni sulla posizione di tutti gli oggetti nella simulazione Gazebo: in particolare noi saremo interessati al **secondo elemento del vettore restituito** in quanto rappresenta la posizione del drone. N.B. ho trovato che è il secondo elemento in modo sperimentale guardando i dati che dava in output. 
-
-Per visualizzare i topic di Gazebo avremmo bisogno di `ignition-tools`:
-
-```bash
-sudo apt install ignition-tools
-# Per visualizzare tutti i topic disponibili
-ign topic -l
-```
-
-Il collegamento con ROS sarà gestito da `ros_gz_bridge` :  questo pacchetto installato con apt non funziona, nella pagina [github](https://github.com/gazebosim/ros_gz) viene infatti specificato che per la combinazione ROS2 Humble e Gazebo Garden esso va compilato con colcon. 
-
-Esso va inserito come package nel workspace dove viene utilizzato, altrimenti non funziona sempre (provato sperimentalmente). **N.B. Nella presente repository il workspace ha già all’interno tutti i package necessari, quindi i passi seguenti sono un tutorial solo per costruire un eventuale nuovo workspace.** 
-
-Per scaricare la repository nel workspace:
-
-```bash
-mkdir -p ~/workspace/src
-cd ~/workspace/src
-export GZ_VERSION=garden
-git clone https://github.com/gazebosim/ros_gz.git -b ros2
-```
-
-Installare le dependencies (installare rosdep se non presente)
-
-```bash
-cd ~/workspace
-rosdep install -r --from-paths src -i -y --rosdistro humble
-```
-
-Compilare il workspace with colcon:
-
-```bash
-colcon build
-source install/local_setup.bash
-```
-
-## Utilizzo ros_gz_bridge
-
-Per avviare il bridge tra ROS e Gazebo usare il seguente comando, dopo aver avviato la simulazione gazebo:
-
-```bash
-ros2 run ros_gz_bridge parameter_bridge  /world/default/pose/info@geometry_msgs/msg/PoseArray[gz.msgs.Pose_V
-```
-
-Per collegare il tipo corretto di ROS al messaggio di Gazebo usare la tabella contenuta [in questo link](https://github.com/gazebosim/ros_gz/tree/ros2/ros_gz_bridge). Il comando precendente funziona avviando la simulazione `make px4_sitl gz_x500`. Si può verificare con `ros2 topic list` la presenza del nuovo topic nell’ambiente ROS.
-
-Nel codice questo comando viene eseguito automaticamente all’avvio del nodo `mocap_node` eseguendo le seguenti istruzioni python:
-
-```python
-import subprocess
-
-def launch_ros_gz_bridge(topic:str, ros_type:str, gz_type:str):
-        """ Launch subprocess to bridge Gazebo and ROS2 """
-        argument = f"{topic}@{ros_type}[{gz_type}"
-        command = "ros2 run ros_gz_bridge parameter_bridge "+argument
-        subprocess.Popen(command.split(' '))
-
-# Richiamo funzione
-launch_ros_gz_bridge(
-	"/world/default/pose/info",
-	"geometry_msgs/msg/PoseArray",
-	"gz.msgs.Pose_V")
-```
-
-Si può notare che ora è disponibile con il comando `ros2 topic list` il nuovo topic creato da ros_gz_bridge. 
-
-# Pacchetto motion_capture
+# Pacchetto motion_capture (Work in progress)
 
 Questo pacchetto è stato scritto interamente da capo, i compiti svolti al suo interno sono i seguenti:
 
-- Avvio di ros_gz_bridge per ottenere la posizione del drone
 - Trasformazione del messaggio di Gazebo in un reference frame corretto per ROS2
 - Pubblicazione dei seguenti topic necessari per Rviz:
     - `/x500/pose` : orientamento e posizione attuale del drone
@@ -123,7 +81,7 @@ Questo pacchetto è stato scritto interamente da capo, i compiti svolti al suo i
 
 Per la configurazione di Rviz ho sovrascritto il file `gz_groundtruth/src/px4-offboard/resource/visualize.rviz` dal menù di rviz facendo “salva con nome”, dopo aver aggiunto le nuove tracce.
 
-# PX4 Visual Odometry
+# PX4 Visual Odometry (Work in progress)
 
 I contenuti principali sono stati presi da [questa pagina di documentazione](https://dev.px4.io/v1.11_noredirect/en/ros/external_position_estimation.html). 
 
@@ -145,7 +103,7 @@ velocity = float('NaN')
 
 Importante impostare correttamente il parametro `timestamp` e `timestamp_sample`: il primo rappresenta il momento di invio del messaggio e il secondo il momento di campionamento. Se impostati non correttamente lo stimatore EFK2 ignorerà i campioni inviati. Per impostarli correttamente bisogna fare riferimento al tempo utilizzato a bordo di PX4 e non semplicemente il timestamp preso dal PC: come soluzione temporanea il nodo motion_capture copia il timestamp pubblicato sul topic `/fmu/out/vehicle_attitude` e lo inserisce nel messaggio `vehicle_visual_odometry`. 
 
-## Parametri da impostare su PX4
+## Parametri da impostare su PX4 (Work in progress)
 
 Oltre a inviare i dati di odometria bisogna anche impostare alcuni parametri da QGroundControl per far si che la odometria visuale sia utilizzata come fonte primaria:
 
