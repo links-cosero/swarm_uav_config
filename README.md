@@ -64,8 +64,8 @@ make distclean
 ```
 Fetch and checkout then add the modules to match the px4 v1.11 version.
 ```
-git fecth origin release/1.13
-git checkout release/1.13
+git fecth origin release/1.11
+git checkout release/1.11
 make submodulesclean
 ```
 
@@ -78,6 +78,16 @@ Finally, run the following command to lanch the simulation.
 ```
 make px4_sitl gazebo
 ```
+
+The following warning will display and the command will stop. 
+```
+...
+error: no matching function for call to ‘max(long int, int)’
+  207 |                         const size_t stacksize = math::max(PTHREAD_STACK_MIN, PX4_STACK_ADJUSTED(wq->stacksize));
+      |                                                  ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ ...
+```
+To solve, go on the above line and add static_cast<long> before PX4_STACK_ADJUSTED(wq->stacksize). Then rebuild and everything should work.
 
 ## ROS-PX4 bridge: MicroXRCEAgent installation
 See the [docs](https://docs.px4.io/main/en/ros/ros2_comm.html) for more details. Below are the steps to install the bridge.
