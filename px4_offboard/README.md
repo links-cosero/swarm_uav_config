@@ -1,4 +1,4 @@
-# px4-offboard
+# Offboard Control example
 This `repository` contains a python examples for offboard control on ROS2 with PX4 and below you can find the steps to make it works with PX4 Firmware version 1.13.3, Gazebo version 11.10.2, ROS2 Humble, Micro-XRCE Agent and Fast-RTPS-Gen.
 
 The `px4_offboard` package contains the following nodes
