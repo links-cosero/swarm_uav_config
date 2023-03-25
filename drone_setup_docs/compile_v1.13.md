@@ -1,0 +1,1 @@
+# Instructions to compile the code locally for the OmnibusF4SD board
