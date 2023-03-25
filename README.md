@@ -117,8 +117,9 @@ In another terminal, source the ROS2 workspace and start the agent
 source /opt/ros/humble/setup.bash
 MicroXRCEAgent udp4 -p 8888
 ```
+Additionaly the last step is to install the QGroundControl GCS app.
 
-##QGroundControl installation
+## QGroundControl installation
 Enter the following commands to install properly the program.
 ```
 sudo usermod -a -G dialout $USER
@@ -153,82 +154,5 @@ colcon build
 
 All the programs, packages and their dependencies are now fully installed. You can proceed to the following steps in order to setup and launch the simulation demo.
 
-## Offboard Example
-
-First, clone the offboard package inside the workspace folder and build it.
-```
-cd ~/uav_config_ws/src/
-git clone https://github.com/Jaeyoung-Lim/px4-offboard.git src/px4-offboard
-cd ..
-colcon build
-```
-Close the terminal.
-Install [Terminator](https://github.com/gnome-terminator/terminator/blob/master/INSTALL.md) from the link. Then, open the app and start 4 terminals. In each one of them first source the local setup file of the workspace or instead write the following command to source automaticaly everytime a new shell is opened.
-```
-cd ~/uav_config_ws
-source /home/$user/uav_config_ws/install/local_setup.bash
-```
-**Warning** if instead local_setup.sh is sourced the ros2 topic list command will not see the published topic so be careful!
-
-On the first one, start the simulation of Gx 500 quadrotor inside Gazebo Garden.
-```
-cd ~/PX4-Autopilot
-make px4_sitl gz_x500
-```
-On the second one, execute the XRCEAgent as follows:
-```
-MicroXRCEAgent udp4 -p 8888
-```
-
-On third one check first the topic list and then check that the vehicle_status publishes something:
-```
-ros2 topic list
-ros2 topic echo /fmu/out/vehicle_status
-```
-Ctrl+C to stop the topic echo. On the same terminal, run the offboard example:
-```
-ros2 launch px4_offboard offboard_position_control.launch.py
-```
-
-On the forth terminal, open QGroundControl which should connect automatically.
-```
-./QGroundControl.AppImage
-```
-To allow arming, we need to tell PX4 that it's fine to do offboard control without RC connected.
-Go to **Vehicle Setup**, **Parameters**, and set [COM_RCL_EXCEPT](https://docs.px4.io/main/en/advanced_config/parameter_reference.html#COM_RCL_EXCEPT) to 4 which means Offboard is ignored.
-Then go back and click on the mode and switch it to **Offboard**. Then, click on **Ready to fly** and click **Arm**.
-
-It should now take off and start flying a circle, as commanded by the offboard Python script.
-
-## Troubleshooting
-When building px4_ros_com a warning may arise like follows.
-```
-...
-warning: format ‘%llu’ expects argument of type ‘long long unsigned int’, but argument 5 has type ‘px4_msgs::msg::DebugVect_<std::allocator<void> >::_timestamp_type’ {aka ‘long unsigned int’}
---- stderr: px4_ros_com
-...
-```
-
-In order to solve the warning go inside px4_ros_com/src/examples/advertisers/debug_vect_advertiser.cpp and change %llu to %lu in Line 66.
-Now build again:
-```
-cd ~/uav_config_ws
-colcon build --packages-select px4_ros_com 
-```
-And the package should build without stderr.
-
-When building px4_offboard a warning may arise as follows.
-```
-...
-UserWarning: Usage of dash-separated 'script-dir' will not be supported in future versions. Please use the underscore name 'script_dir' instead
-UserWarning: Usage of dash-separated 'install-scripts' will not be supported in future versions. Please use the underscore name 'install_scripts' 
---- stderr: px4_offboard     
-```
-
-Go inside the package px4-offboard and change script-dir to script_dir and install-scripts to install_scripts.
-Next do:
-```
-cd ~/uav_config_ws
-colcon build --packages-select px4_offboard 
-```
-And the package should build without stderr.
+## Conclusion
+All the necessary steps are done and now the simulation setup is completed. Next, we can move to the config of the workspace in which multiple scripts are built in order to command the drone in Offboard Mode. See [Offboard control example](px4_offboard/README.md) for details on the implementation.
