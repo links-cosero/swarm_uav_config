@@ -62,8 +62,8 @@ When building px4_msgs a stderr will arise and stop the build of the workspace, 
 offboard_ws/build/px4_msgs/rosidl_generator_c/px4_msgs/msg/detail/gimbal_v1_command__struct.h:356:3: error: expected identifier or ‘(’ before ‘/’ token
 offboard_ws/build/px4_msgs/rosidl_generator_c/px4_msgs/msg/detail/gimbal_v1_command__struct.h:366:3: error: expected identifier or ‘(’ before ‘/’ token
 ...
-In order to go inside the mentioned file and erase one ```*/```, then rebuild.
-
+```
+In order to fix, go inside the mentioned file and erase one ```*/```, then rebuild.
 The same fix has to be implemented as a subsequent build will give the following error.
 ```
 offboard_ws/build/px4_msgs/rosidl_generator_c/px4_msgs/msg/detail/vehicle_command__struct.h:356:3: error: expected identifier or ‘(’ before ‘/’ token
@@ -82,6 +82,7 @@ pip install setuptools==58.2.0
 ```
 
 Finally, another stderr that will occur is the following one.
+```
 ...
 UserWarning: Usage of dash-separated 'script-dir' will not be supported in future versions. Please use the underscore name 'script_dir' instead
 UserWarning: Usage of dash-separated 'install-scripts' will not be supported in future versions. Please use the underscore name 'install_scripts' 
