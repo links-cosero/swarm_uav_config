@@ -1,4 +1,5 @@
 # Offboard Control example
+**WIP: The gazebo simulator gives me notify negative when trying to set Offboard Mode in QGroundControl in order to make the drone follow the script mission**
 This `repository` contains a python examples for offboard control on ROS2 with PX4 and below you can find the steps to make it works with PX4 Firmware version 1.13.3, Gazebo version 11.10.2, ROS2 Humble, Micro-XRCE Agent and Fast-RTPS-Gen.
 
 The `px4_offboard` package contains the following nodes
