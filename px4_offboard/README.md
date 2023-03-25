@@ -69,11 +69,23 @@ The same fix has to be implemented as a subsequent build will give the following
 offboard_ws/build/px4_msgs/rosidl_generator_c/px4_msgs/msg/detail/vehicle_command__struct.h:356:3: error: expected identifier or ‘(’ before ‘/’ token
 ```
 
+Then, another error will arise now regarding px4-offboard package.
+```
+...
+--- stderr: px4-offboard
+/usr/lib/python3.10/site-packages/setuptools/command/install.py:34: SetuptoolsDeprecationWarning: setup.py install is deprecated. Use build and pip and other standards-based tools.
+...
+```
+It means that you have installed a version of setuptools that is above 58.2.0, to fix you need to downgrade to this version. Type the following.
+```
+pip install setuptools==58.2.0
+```
+
 Finally, another stderr that will occur is the following one.
 ...
 UserWarning: Usage of dash-separated 'script-dir' will not be supported in future versions. Please use the underscore name 'script_dir' instead
 UserWarning: Usage of dash-separated 'install-scripts' will not be supported in future versions. Please use the underscore name 'install_scripts' 
---- stderr: px4_offboard     
+--- stderr: px4-offboard     
 ```
 To fix, go inside the package px4-offboard and change script-dir to script_dir and install-scripts to install_scripts.
 Next rebuild and everything should work without errors. The setup is completed.
