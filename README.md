@@ -1,5 +1,5 @@
 This repository was build as a reference for the setup and simulation of a mission done by a drone using PX4 and ROS2. In order to correctly launch the mission scripts for the simulated UAV, we need to first install and configure some programs and packages.
-This repo uses Px4 v1.13.3 and gazebo classic 11.10 in order to match the firmware mounted on the drone.
+This repo uses Px4 v1.13.3 and gazebo classic 11.10.2 in order to match the firmware mounted on the drone.
 
 ## ROS2 Humble installation
 See the [docs](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html) for more details. Below there are listed all the needed command to install ROS2 humble.
@@ -47,7 +47,7 @@ echo "export ROS_LOCALHOST_ONLY=1" >> ~/.bashrc
 ## PX4 and Gazebo installation
 See the [docs](https://docs.px4.io/main/en/sim_gazebo_gz/) for more details. Below there are the steps to follow in order to correctly install PX4 and its dependencies.
 
-Install development enviroment for Ubuntu 22.04 LTS. Clone the repository of PX4 in any folder
+Install the development environment for Ubuntu 22.04 LTS. Clone the repository of PX4 in any folder
 ```
 git clone https://github.com/PX4/PX4-Autopilot.git --recursive
 bash ./PX4-Autopilot/Tools/setup/ubuntu.sh
@@ -55,39 +55,29 @@ bash ./PX4-Autopilot/Tools/setup/ubuntu.sh
 The last command automaticaly install Gazebo Garden and its dependencies on Ubuntu 22.04. We do this step in order to be sure that all the dependencies that px4 has with gazebo are installed, we will not use Gazebo Garden itself.
 In order to install the firmware version same as the one on the Flight controller, follow the procedure below.
 
-For our configuration, we need to first downgrade to 1.13 then install gazebo 11.10.
+For our configuration, we need to first downgrade to 1.13 then install gazebo 11.10.2.
 Clean up first the existing version.
 ```
 cd ~/PX4-Autopilot
 make clean
 make distclean
 ```
-Fetch and checkout then add the modules to match the px4 v1.11 version.
+Fetch and checkout then add the modules to match the px4 v1.13 version.
 ```
-git fecth origin release/1.11
-git checkout release/1.11
+git fecth origin release/1.13
+git checkout release/1.13
 make submodulesclean
 ```
 
 Install Gazebo v11 and its dependencies and start the simulation.
 Download the script from [here](https://raw.githubusercontent.com/gazebo-tooling/release-tools/master/one-line-installations/gazebo.sh). Then, source it using the following command. This will overwrite Gazebo Garden and install Gazebo 11.10.
 ```
-sh gazebo.sh
+bash gazebo.sh
 ```
 Finally, run the following command to lanch the simulation.
 ```
-make px4_sitl gazebo
+make px4_sitl_rtps gazebo
 ```
-
-The following warning will display and the command will stop. 
-```
-...
-error: no matching function for call to ‘max(long int, int)’
-  207 |                         const size_t stacksize = math::max(PTHREAD_STACK_MIN, PX4_STACK_ADJUSTED(wq->stacksize));
-      |                                                  ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- ...
-```
-To solve, go on the above line and add static_cast<long> before PX4_STACK_ADJUSTED(wq->stacksize). Then rebuild and everything should work.
 
 ## ROS-PX4 bridge: MicroXRCEAgent installation
 See the [docs](https://docs.px4.io/main/en/ros/ros2_comm.html) for more details. Below are the steps to install the bridge.
@@ -108,6 +98,24 @@ cmake ..
 make
 sudo make install
 sudo ldconfig /usr/local/lib/
+```
+
+To see if everything until now installed correctly follow the below steps in order to run a quick test.
+
+## Test the configuration
+
+In one terminal, start the px4 simulation.
+```
+source /opt/ros/humble/setup.bash
+cd PX4_Autopilot
+make px4_sitl_rtps gazebo
+```
+On the px4 terminal write ```microdds_client start -t udp -p 8888``` to run client that will interface with Micro-XRCE-DDS Agent.
+
+In another terminal, source the ROS2 workspace and start the agent
+```
+source /opt/ros/humble/setup.bash
+MicroXRCEAgent udp4 -p 8888
 ```
 
 ##QGroundControl installation
