@@ -120,7 +120,84 @@ constexpr timer_io_channels_t timer_io_channels[MAX_TIMER_IO_CHANNELS] = {
 /* ... */
 ```
 
-## Geometry files
+## Geometry files (ancora da testare)
 [Official documentation](https://docs.px4.io/v1.13/en/concept/geometry_files.html) 
 
-Creare un geometry file specificando la configurazione dei motori necessaria e utilizzarlo in un mixer. Una volta fatto questo caricare il mixer che utilizza quella configurazione (non riesco a farlo)
+Per creare un geometry file che specifica la configurazione dei motori necessaria per i droni nel Robotics Lab Links, va creato il seguente file  `src/lib/mixer/MultirotorMixer/geometries/quad_x_links.toml`. Il contenuto del file specifica la disposizione dei motori e degli attuatori
+```toml
+# Generic Quadcopter in X configuration
+
+[info]
+key = "4x_links"
+description = "Quadcopter X configuration. Motor ordering changed to match Links drone"
+
+[rotor_default]
+direction = "CW"
+axis      = [0.0, 0.0, -1.0]
+Ct        = 1.0
+Cm        = 0.05
+
+[[rotors]]
+name      = "front_right"
+position  = [0.707107, 0.707107, 0.0]
+direction = "CCW"
+
+[[rotors]]
+name     = "rear_right"
+position = [-0.707107, 0.707107, 0.0]
+
+[[rotors]]
+name      = "rear_left"
+position  = [-0.707107, -0.707107, 0.0]
+direction = "CCW"
+
+[[rotors]]
+name     = "front_left"
+position = [0.707107, -0.707107, 0.0]
+
+```
+Da notare che l'ordine con cui vengono dichiarati è importante per PX4. Semplicemte scambiando di ordine da un altro geometry file, questo file rispecchia la configurazione dei droni al Robotics Lab. 
+
+Successivamente è necessario aggiungere al file `src/lib/mixer/MultirotorMixer/geometries/CMakeLists.txt`
+```cmake
+# ...
+	quad_y.toml
+	tri_y.toml
+	twin_engine.toml
+	quad_x_links.toml # file aggiunto
+)
+# ...
+
+```
+Una volta fatto questo si può creare un nuovo file mixer che utilizza la geometria precedentemente specificata. 
+
+Per fare questo creare il file `ROMFS/px4fmu_common/mixers/quad_x_links.main.mix` che contiene: 
+```
+R: 4x_links
+
+AUX1 Passthrough
+M: 1
+S: 3 5  10000  10000      0 -10000  10000
+
+AUX2 Passthrough
+M: 1
+S: 3 6  10000  10000      0 -10000  10000
+
+Failsafe outputs
+The following outputs are set to their disarmed value
+during normal operation and to their failsafe falue in case
+of flight termination.
+Z:
+Z:
+```
+
+Importante è la prima riga dove si specifica la geometria da utilizzare. Una spiegazione più dettagliata sulla struttura del mixer file viene fornita nella [documentazione ufficiale](https://docs.px4.io/v1.13/en/concept/mixing.html). 
+
+A questo punto è necessario solamente caricare durante l'esecuzione dell'autopilota il nuovo mixer al posto di quello caricato automaticamente. Per fare questo sulla OmnibusF4SD si dovrà creare sulla microSD il file `/etc/config.txt` contenente: 
+```bash
+set MIXER quad_x_links
+``` 
+Per caricare il mixer sulla simulazione su Gazebo, eseguire il seguente comando sulla shell di PX4 (da notare che questo causerà instabilità nel drone quando si tenta il decollo in quando il mixer file è sbagliato per il drone simulato):
+```bash
+mixer load /dev/pwm_output0 /absolute/path/to/quad_x_links.main.mix
+```
