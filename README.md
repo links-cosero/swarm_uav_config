@@ -49,7 +49,7 @@ See the [docs](https://docs.px4.io/main/en/sim_gazebo_gz/) for more details. Bel
 
 Install the development environment for Ubuntu 22.04 LTS. Clone the repository of PX4 in any folder
 ```
-git clone https://github.com/PX4/PX4-Autopilot.git --recursive
+git clone https://github.com/links-cosero/PX4-Autopilot.git --recursive
 bash ./PX4-Autopilot/Tools/setup/ubuntu.sh
 ```
 The last command automaticaly install Gazebo Garden and its dependencies on Ubuntu 22.04. We do this step in order to be sure that all the dependencies that px4 has with gazebo are installed, we will not use Gazebo Garden itself.

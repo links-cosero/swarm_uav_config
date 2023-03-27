@@ -1,7 +1,8 @@
+# Clone repository
 In order to install the firmware version same as the one on the Flight controller, follow the procedure below.
 ```
 cd ~
-git clone git clone https://github.com/PX4/PX4-Autopilot.git --recursive
+git clone git clone https://github.com/links-cosero/PX4-Autopilot.git --recursive
 ```
 Clean up first the existing version.
 ```

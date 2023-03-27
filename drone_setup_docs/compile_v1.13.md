@@ -3,7 +3,7 @@
 Per scaricare la repository e fare correttamente il checkout alla versione 1.13 di PX4 eseguire i seguenti comandi:
 
 ```bash
-git clone https://github.com/PX4/PX4-Autopilot.git --recursive
+git clone https://github.com/links-cosero/PX4-Autopilot.git --recursive
 cd PX4-Autopilot
 git checkout release/1.13
 git submodule update --recursive
@@ -96,6 +96,31 @@ then
 fi
 # ...
 ```
+# Ordine Motori
+Il drone usato nel laboratorio links utilizza un ESC che non è compatibile con l'ordine dei motori indicato nell'airframe standard di PX4 per i quadrirotore. Per risolvere questo problema un primo tentativo  è stato fatto scambiando l'ordine dei fili di output dal Flight Controller all'ESC. L'ordine corretto è rappresentato nella seguente tabella
+|       | Motore ESC attuale  | Motore ESC corretto | 
+|:---   | :---:               | :---:               |
+|PX4_M1 | M1                  | M1                  |
+|PX4_M2 | M2                  | M4                  | 
+|PX4_M3 | M3                  | M2                  | 
+|PX4_M4 | M4                  | M3                  | 
 
-# Definizione nuovo Airframe
-Da fare
+La direzione di rotazione è corretta per tutti e 4 i motori sia prima che dopo lo scambio. 
+
+## timer_config.h (ancora da testare)
+Un'altro modo per scambiare gli output della scheda è cambiare la definizione di dove sono mappati gli output PWM. E' possibile fare questo dal file `boards/omnibus/f4sd/src/timer_config.cpp`, in particolare la seguente sezione di codice riporta la posizione dove è possibile cambiare il collegamento tra timer e pin GPIO. 
+```c++
+/* ... */
+constexpr timer_io_channels_t timer_io_channels[MAX_TIMER_IO_CHANNELS] = {
+	initIOTimerChannel(io_timers, {Timer::Timer3, Timer::Channel3}, {GPIO::PortB, GPIO::Pin0}),
+	initIOTimerChannel(io_timers, {Timer::Timer3, Timer::Channel4}, {GPIO::PortB, GPIO::Pin1}),
+	initIOTimerChannel(io_timers, {Timer::Timer2, Timer::Channel4}, {GPIO::PortA, GPIO::Pin3}),
+	initIOTimerChannel(io_timers, {Timer::Timer2, Timer::Channel3}, {GPIO::PortA, GPIO::Pin2}),
+};
+/* ... */
+```
+
+## Geometry files
+[Official documentation](https://docs.px4.io/v1.13/en/concept/geometry_files.html) 
+
+Creare un geometry file specificando la configurazione dei motori necessaria e utilizzarlo in un mixer. Una volta fatto questo caricare il mixer che utilizza quella configurazione (non riesco a farlo)
