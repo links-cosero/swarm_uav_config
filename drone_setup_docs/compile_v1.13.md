@@ -1,4 +1,12 @@
-# Compilare per OmnibusF4SD
+# Compilare per OmnibusF4SD (WORK IN PROGRESS)
+
+|Component	|Version	|
+| :--- 		| :--- 		|
+| **Flight Controller** | OmnibusF4SD 	|
+| **PX4** 				| v1.14.0b (main)|
+| **PX4-ROS2 bridge**	| microXRCE		|
+| **ROS 2**				| Humble		|
+| **OS**				| Ubuntu 22.04  |
 
 Per scaricare la repository e fare correttamente il checkout alla versione 1.13 di PX4 eseguire i seguenti comandi:
 
@@ -70,17 +78,6 @@ rtps:
 ...
 ```
 
-# System Startup
-
-Si può personalizzare i comandi che vengono eseguiti all’avvio del drone come per esempio eseguire in automatico il `microdds_client`. I file necessari necessari possono essere modificati direttamente nel codice sorgente oppure aggiunti sulla scheda SD. 
-
-[Per avviare ulteriori moduli](https://docs.px4.io/v1.13/en/concept/system_startup.html) all’avvio all’interno della scheda SD si deve aggiungere il file `etc/extras.txt`  contenente i comandi da eseguire:
-
-```yaml
-microdds_client start -t udp -p 8888 # avvio client XRCE
-```
-
-Si possono anche definire nuovi mixer file all’interno della cartella `etc/mixers/NAME_OF_MIXER` nella scheda SD. 
 
 ## System startup in SITL
 
