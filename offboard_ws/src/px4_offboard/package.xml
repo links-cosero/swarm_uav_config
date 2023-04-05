@@ -4,7 +4,7 @@
   <name>px4_offboard</name>
   <version>0.0.0</version>
   <description>ROS2 python interface for px4</description>
-  <maintainer email="jalim@ethz.ch">jaeyoung</maintainer>
+  <maintainer email="test@gmail.com">DavideMorazzo,RonaldDutu</maintainer>
   <license>BSD-3</license>
   
   <depend>px4_msgs</depend>

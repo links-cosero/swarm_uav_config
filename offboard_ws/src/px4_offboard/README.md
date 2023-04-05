@@ -2,41 +2,28 @@
 This `repository` contains a python examples for offboard control on ROS2 with [PX4](https://px4.io/)
 
 The `px4_offboard` package contains the following nodes
-- `offboard_control.py`: Example of offboard position control using position setpoints
-- `visualizer.py`: Used for visualizing vehicle states in Rviz
+- `offboard_custom.py`: Example of offboard position control using position setpoints
 
-The source code is released under a BSD 3-Clause license.
+## Run
 
-- **Author**: Jaeyoung Lim
-- **Affiliation**: Autonomous Systems Lab, ETH Zurich
-
-## Setup
-Add the repository to the ros2 workspace
+On the first terminal, run the following:
 ```
-git clone https://github.com/Jaeyoung-Lim/px4-offboard.git
+cd PX4-Autopilot
+make px4_sitl gz_x500
 ```
 
-## Running
-You will make use of 3 different terminals to run the offboard demo.
-
-On the first terminal, run a SITL instance from the PX4 Autopilot firmware.
+On the second terminal terminal, run Micro XRCE-DDS:
 ```
-make px4_sitl gazebo
-```
-
-On the second terminal terminal, run the micro-ros-agent which will perform the mapping between Micro XRCE-DDS and RTPS. So that ROS2 Nodes are able to communicate with the PX4 micrortps_client.
-```
-micro-ros-agent udp4 --port 8888
+MicroXRCEAgent udp4 -p 8888
 ```
 
 In order to run the offboard position control example, open a third terminal and run the the node.
-This runs two ros nodes, which publishes offboard position control setpoints and the visualizer.
-```
-ros2 launch px4_offboard offboard_position_control.launch.py
-```
-![offboard](https://user-images.githubusercontent.com/5248102/194742116-64b93fcb-ec99-478d-9f4f-f32f7f06e9fd.gif)
 
-In order to just run the visualizer,
 ```
-ros2 launch px4_offboard visualize.launch.py
+cd swarm_uav_config/offboard_ws
+source install/local_setup.bash
+ros2 run px4_offboard offboard_custom
 ```
+
+The drone should takeoff, follow the script by walking to the two waypoints in sequence and finally it should land and disarm for the mission to finish correctly.
+
