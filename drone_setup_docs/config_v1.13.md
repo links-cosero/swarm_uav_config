@@ -1,10 +1,10 @@
+# Drone configuration
 |Component	|Version	|
 | :--- 		| :--- 		|
 | **Flight Controller** | OmnibusF4SD 	|
 | **PX4** 				| v1.14.0b (main)|
-| **PX4-ROS2 bridge**	| microXRCE		|
-| **ROS 2**				| Humble		|
 | **OS**				| Ubuntu 22.04  |
+| **QGroundControl**	| v4.2.4		|
 
 # Clone repository
 In order to install the firmware version same as the one on the Flight controller, follow the procedure below.
@@ -74,13 +74,13 @@ Navigate then to `Vehicle Setup -> Parameters` and set the following:
 
 **Parameters to set**:
 | Parameter name 	| Value   	| Comment	|
-| :---:   			| :---: 	| :---		| 	
+| :---   			| :---: 	| :---		| 	
 | COM_CPU_MAX		| -1	   	| Disable CPU load check 	|
 | SYS_MC_EST_GROUP	| ekf2		| Set EKF2 as estimator 	|
 
 **Geometry parameters**
 | Parameter name 	| Value   	| Comment	|
-| :---:   			| :---: 	| :---		| 	
+| :---   			| :---: 	| :---		| 	
 | PWM_MAIN_TIM(0,1)	| -3 	   	| DShot 600 |
 | PWM_MAIN_FUNC1	| 101		| PWM1 output to Motor1 |
 | PWM_MAIN_FUNC2	| 102		| PWM2 output to Motor2 |
@@ -97,8 +97,20 @@ Next step is to calibrate ESC:
 - open QGroundControl and connect the drone
 - navigate to `Vehicle Setup -> Power`
 - follow instructions in the tab `ESC PWM Minimum and Maximum Calibration`
+param set-default PWM_MAIN_FUNC1 101
 
 If needed the RC remote calibration and setup is also needed. To do it navigate to `Vehicle Setup -> Radio`. Also check the `Vehicle Setup -> Flight Modes` to setup the arm channel and flight modes channel. 
+
+## Motor Ordering
+The drone used in the lab used an ESC that is not compatible with the PX4 motor layout for a quadrotor. To fix this issue we first tries with swapping the wires of the ESC from the flight controller. The correct motor ordering is shown in this table:
+|       | Actual ESC motor    | Correct ESC motor | 
+|:---   | :---:               | :---:               |
+|PX4_M1 | M1                  | M1                  |
+|PX4_M2 | M2                  | M4                  | 
+|PX4_M3 | M3                  | M2                  | 
+|PX4_M4 | M4                  | M3                  | 
+
+Check also for motor direction of rotation. Swapping can be done setting parameters explained in the previous section.  
 
 # PID Tuning 
 **TODO**
@@ -110,6 +122,11 @@ We can customize the commands that are executed during the startup of the drone,
 [To execute modules](https://docs.px4.io/main/en/concept/system_startup.html) during the start of the system we have to add to the SD card the file `etc/extras.txt` that contains the command:
 ```bash
 microdds_client start -t udp -p 8888 # avvio client XRCE con UDP
+```
+Another useful file to place in the SD card is `/etc/config.txt` where parameters can be set, for example for motors like:
+```bash
+param set-default PWM_MAIN_FUNC1 101
+param set-default PWM_MAIN_FUNC2 102
 ```
 
 
