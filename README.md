@@ -2,7 +2,7 @@ This repository was build as a reference for the setup and simulation of a missi
 This repo uses Px4 v1.14 (main version), MicroXRCE and Gazebo Garden.
 
 1. [Installation](offboard_ws/README.md) 
-2. [Offboard control example](src/px4_offboard/README.md)
+2. [Offboard control example](offboard_ws/src/px4_offboard/README.md)
 3. [Groundtruth Example](gz_groundtruth/README.md)
 
 Credits: Davide Morazzo, Ronald Cristian Dutu
