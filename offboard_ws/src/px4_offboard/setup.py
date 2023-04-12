@@ -19,16 +19,15 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='jaeyoung',
-    maintainer_email='jalim@ethz.ch',
+    maintainer='ronald/davide',
+    maintainer_email='test@gmail.com',
     description='TODO: Package description',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-                'offboard_control = px4_offboard.offboard_control:main',
-                'offboard_custom = px4_offboard.offboard_custom:main',
-                'visualizer = px4_offboard.visualizer:main',
+                'offboard_uav = px4_offboard.offboard_uav:main',
+                'offboard_uav2 = px4_offboard.offboard_uav2:main',
         ],
     },
 )
