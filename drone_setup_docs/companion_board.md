@@ -41,7 +41,7 @@ L'unica porta seriale disponibile per XRCE è UART6.
 
 [Share the same port with mavlink and rtps](https://discuss.px4.io/t/sharing-one-port-between-mavlink-and-fastrtps-bridge/10247)
 
-# Companion Computer Setup
+# Companion Computer Setup tramite adattatore USB-UART
 Seguire i passi spiegati sulla [wiki](https://wiki.friendlyelec.com/wiki/index.php/NanoPi_NEO_Air) per installare sulla scheda SD il sistema operativo desiderato. Una volta compiuto questo step per avere una console utilizzare la porta di debug UART0 (spiegato nella guida). Nel nostro caso abbiamo utilizzato un adattatore USB `TTL-232R-3V3` con il seguente [datasheet](https://docs.rs-online.com/9110/0900766b8139de64.pdf). Collegare i fili nel seguente modo:
 |TTL-232R-3V3	| NanoPi debug port	|
 | :---: 		| :---: 		|
@@ -82,3 +82,37 @@ ssh pi@XXX.XXX.X.X
 ## Antenna
 Sulla scheda è presente un connettore per una antenna esterna. Sperimentalmente senza antenna il segnale ricevuto anche da molto vicino è molto debole e anche la velocità di scaricamento dati è esageratamente lenta. Anche dalla pagina del router viene mostrato che il collegamento è molto debole: per esempio a 3 metri dal router il laptop viene ricevuto con una potenza di -60dBm, mentre la nanoPi con -90dBm di potenza. Provando a collegare una antenna la situazione migliora moltissimo e la scheda ha un comportamento "normale". 
 Il connettore della antenna viene specificato sul sito di acquisto essere di tipo IPX.
+
+# Companion Computer Setup tramite antenna APK
+Scaricare da [qui](https://onedrive.live.com/?authkey=%21ACFNomemEVW6hxM&cid=1F5B36BBA3D56743&id=1F5B36BBA3D56743%2118033&parId=1F5B36BBA3D56743%219624&o=OneUp) il file immagine che installerà sulla companion Ubuntu 20.04 LTS 4.14.111.
+Una volta scaricato usare Balena Etcher per flashare sulla scheda SD collegata al PC l'immagine.
+Dopodiché andare in ```media/$USER/rootfs/etc/wpa_supplicant``` e creare un file ```wpa_supplicant.conf``` da terminale nel seguente modo:
+```
+sudo gedit wpa_supplicant.conf 
+```
+All'interno del file inserire la seguente:
+```
+network={
+ssid="Your wifi network"
+psk="Password"
+proto=RSN
+key_mgmt=WPA-PSK
+pairwise=CCMP
+auth_alg=OPEN
+}
+```
+Cambiando opportunamente ssid e psk per collegarsi alla rete wifi. 
+Dopodiché, andare in ```media/$USER/rootfs/etc/networks/interfaces``` e aggiungere le seguenti righe di codice:
+```
+auto wlan0
+allow-hotplug wlan0
+iface wlan0 inet dhcp
+wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+iface default inet dhcp
+```
+
+Dodichè una volta che la procedura è andata a buon fine, ricollegare la scheda SD alla companion. Dopo aver collegato l'antenna alla companion, digitare il seguente comando da terminale per collegarsi board tramite ssh
+```
+ssh root@192.168.50.124
+```
+La password da digitare è ```fa```. Dopodiché la connessione dovrebbe avvenire con successo. Se ciò non si dovesse verificare, controllare nella pagina web del router se la connessione con la companion è avvenuta verificando se l'ip della companion è presente nella lista dei dispositivi collegati.
