@@ -42,7 +42,18 @@ L'unica porta seriale disponibile per XRCE è UART6.
 [Share the same port with mavlink and rtps](https://discuss.px4.io/t/sharing-one-port-between-mavlink-and-fastrtps-bridge/10247)
 
 # Companion Computer Setup tramite adattatore USB-UART
-Seguire i passi spiegati sulla [wiki](https://wiki.friendlyelec.com/wiki/index.php/NanoPi_NEO_Air) per installare sulla scheda SD il sistema operativo desiderato. Una volta compiuto questo step per avere una console utilizzare la porta di debug UART0 (spiegato nella guida). Nel nostro caso abbiamo utilizzato un adattatore USB `TTL-232R-3V3` con il seguente [datasheet](https://docs.rs-online.com/9110/0900766b8139de64.pdf). Collegare i fili nel seguente modo:
+Seguire i passi spiegati sulla [wiki](https://wiki.friendlyelec.com/wiki/index.php/NanoPi_NEO_Air) per installare sulla scheda SD il sistema operativo desiderato. Sono necessarie ulteriori configurazioni (testate solamente su Ubuntu 20.04): l'immagine scaricata di default crea delle partizioni con un numero troppo scarso di INodes, è necessario quindi riformattare la partizione `userdata` con un numero più alto di inodes, altrimenti essi verranno esauriti prima di esaurire lo spazio (8GB microSD). Per fare questo eseguire i seguenti comandi <u>prima di inserire la microSD nella NanoPi per la prima volta</u>:
+```bash
+# Identificare la partizione "userdata" con il comando
+lsblk
+# smontare la partizione
+sudo umount /dev/my_userdata_partition
+# formattare la partizione
+sudo mke2fs -i 4096 -L userdata /dev/my_userdata_parition
+```
+
+## Serial USB terminal
+Una volta compiuto questo step per avere una console utilizzare la porta di debug UART0 (spiegato nella guida). Nel nostro caso abbiamo utilizzato un adattatore USB `TTL-232R-3V3` con il seguente [datasheet](https://docs.rs-online.com/9110/0900766b8139de64.pdf). Collegare i fili nel seguente modo:
 |TTL-232R-3V3	| NanoPi debug port	|
 | :---: 		| :---: 		|
 |VCC|VCC_5V|
@@ -55,11 +66,12 @@ Per avviare il collegamento seriale utilizzare il programma Putty:
 - Selezionare modalità `Serial`
 - Impostare *Serial line* a `/dev/ttyUSB0` e *Speed* `115200`
 - Cliccare su Open
+- Premere invio può essere necessario per far partire la seriale se non si vede dell'output subito nella console
 
 La password per l'utente `pi` è `pi`, per l'utente `root` è `fa` di default. 
 
 ## Connessione WiFi e SSH
-Una volta aperta la connessione seriale per connettere la scheda ad un access point (è solo supportato il WiFi 2.4 GHz) eseguire i seguenti comandi:
+Una volta aperta la connessione seriale (N.B. può essere necessario oltre alla porta seriale collegata al PC anche la porta microUSB) per connettere la scheda ad un access point (è solo supportato il WiFi 2.4 GHz) eseguire i seguenti comandi:
 ```bash
 su root
 nmcli dev
@@ -116,3 +128,5 @@ Dodichè una volta che la procedura è andata a buon fine, ricollegare la scheda
 ssh root@192.168.50.124
 ```
 La password da digitare è ```fa```. Dopodiché la connessione dovrebbe avvenire con successo. Se ciò non si dovesse verificare, controllare nella pagina web del router se la connessione con la companion è avvenuta verificando se l'ip della companion è presente nella lista dei dispositivi collegati.
+## Installazione ROS 2 Humble
+Seguita [questa guida](https://docs.ros.org/en/humble/Installation/Alternatives/Ubuntu-Development-Setup.html). 
