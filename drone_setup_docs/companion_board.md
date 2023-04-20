@@ -128,5 +128,41 @@ Dodichè una volta che la procedura è andata a buon fine, ricollegare la scheda
 ssh root@192.168.50.124
 ```
 La password da digitare è ```fa```. Dopodiché la connessione dovrebbe avvenire con successo. Se ciò non si dovesse verificare, controllare nella pagina web del router se la connessione con la companion è avvenuta verificando se l'ip della companion è presente nella lista dei dispositivi collegati.
-## Installazione ROS 2 Humble
+
+# Installazione ROS 2 Humble
+## Compilazione source
 Seguita [questa guida](https://docs.ros.org/en/humble/Installation/Alternatives/Ubuntu-Development-Setup.html). 
+Fallisce perchè probabilmente manca abbastanza RAM (solo 500 MB disponibili).
+
+## Docker
+La [repository ufficiale docker](https://hub.docker.com/_/ros/) di ROS ha disponibili le immagini di tutte le versioni, però solamente alcune sono disponibili per l'architettura `arm32v7` che è quella della NanoPi. 
+
+Per installare la Docker Engine sulla NanoPi è stata seguita [questa guida](https://docs.docker.com/engine/install/ubuntu/). Dopo aver compilato una immagine di prova per arm32v7 sul PC, per caricarla ed eseguirla sulla NanoPi:
+```bash
+# Salvare immagine su un file
+docker save -o ./my_image_name.tar
+```
+
+Dopo aver trasferito l'immagine dal PC alla NanoPi (con `scp` per esempio):
+```bash
+docker load -i my_image_name.tar
+docker run my_image_name
+```
+
+Per creare un container da avviare più volte (diminuisce molto il tempo di avvio in particolare su NanoPi):
+```bash
+docker create --name my_container my_image_name
+# Per avviarlo
+docker start my_container 
+```
+
+
+## Comunicazione MicroXRCEAgent
+La companion computer è connessa al flight controller tramite un collegamento UART. Sulla companion computer è stato installato il software MicroXRCEAgent [seguendo queste istruzioni](https://micro-xrce-dds.docs.eprosima.com/en/latest/installation.html#installing-the-agent-standalone). Per avviare l'agent:
+```bash
+cd Micro-XRCE-DDS-Agent/build
+./MicroRTPSAgent serial -D /dev/ttyS0
+```
+Ora eseguendo ROS 2 sulla ground station sarà in grado di ricevere i topic pubblicati dall'agent(che viene eseguito sulla companion computer), verificabile con il comando `ros2 topic list`. 
+
+Usando questa configurazione si può stabilire un collegamento tra ROS2 (eseguito sulla ground station) e PX4 sul flight controller, però non viene eseguita una istanza di ROS 2 sulla companion computer. 
