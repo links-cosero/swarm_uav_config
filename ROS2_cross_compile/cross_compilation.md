@@ -1,5 +1,4 @@
-# Come fare la cross-compilation
-# WORK IN PROGRESS
+# ROS2 Cross Compilation per ARMHF
 |	|	|
 | :--- 		| :--- 		|
 | **ROS2 version** 	| Humble 				|
@@ -59,6 +58,10 @@ export C_INCLUDE_PATH="/opt/rootfs/usr/include:/opt/rootfs/usr/include/arm-linux
 export CPLUS_INCLUDE_PATH="/opt/rootfs/usr/include:/opt/rootfs/usr/include/arm-linux-gnueabihf:/opt/rootfs/usr/lib/arm-linux-gnueabihf"
 export LD_LIBRARY_PATH=/opt/rootfs/lib/arm-linux-gnueabihf:/opt/rootfs/lib
 export PYTHON_EXECUTABLE=/opt/rootfs/usr/bin/python3.8
+if [ ! -e /lib/ld-linux-armhf.so.3 ]
+then
+    ln -s /opt/rootfs/lib/ld-linux-armhf.so.3 /lib/ld-linux-armhf.so.3
+fi
 
 colcon build \
     $@ \
@@ -105,7 +108,7 @@ set(CMAKE_CXX_FLAGS -Wno-psabi)
 set(CMAKE_CROSSCOMPILING_EMULATOR /usr/bin/qemu-arm-static)
 ```
 
-Infine è necessario fare una **copia del dei file del target**. Questa operazione è necessaria per fare si che il compiler utilizzi le librerie del target e non quelle dell'host. I passi per svolgere questo step sono spiegati nella prossima sezione. 
+Infine è necessario fare una **copia dei file del target**. Questa operazione è necessaria per fare si che il compiler utilizzi le librerie del target e non quelle dell'host. I passi per svolgere questo step sono spiegati nella prossima sezione. 
 
 ## Setup target
 Eseguire i seguenti comandi sulla NanoPi:
@@ -114,6 +117,7 @@ sudo apt update && sudo apt upgrade
 ```
 ```bash
 sudo apt install -y \
+    symlinks \
     bison \
     cmake \
     curl \
@@ -159,21 +163,29 @@ Seguire le [istruzioni per l'installazione](./install_tutorial.md) per gli step 
 
 # Utilizzo di Docker
 Per utilizzare il container docker relativo all'ambiente di sviluppo prima è stato creato il container dall'immagine (solo una volta) con il comando `docker create -it --name humble_cc_container humble_cc:latest` e poi tutte le volte viene avviato con `docker start -i humble_cc_container`, così facendo le modifiche fatte al container non sono perse tra i riavvii.
+> In questa repository nella cartella `docker/humble_cc_env` viene fornito un Dockerfile che esegue già tutti gli step per la configurazione dell'ambiente e anche la copia del filesystem armhf. Può essere fatta partire la build con eseguendo il file `docker/humble_cc_env/build.bash` e avviare poi il container con `docker start -i humble_cc_container`. Una volta avviato basterà avviare la [compilazione di ROS](#compilazione). 
 
 ## Docker come emulatore armhf
 Una possibilità è quella di usare un altro container docker che emula l'architettura armhf per generare i file necessari alla compilazione di ROS: questo approccio è molto comodo se non si ha accesso al target fisico e si è rivelato funzionante: ROS2 è stato compilato utilizzando questo metodo e il risultato ha eseguito senza problemi sulla NanoPi. 
 
-Per utilizzare questo metodo semplicemente seguire allo stesso modo i file spiegati nella guida per il [setup del target](#setup-target). Per copiare i file dal container armhf a quello per la compilazione è stato fatto un archivio delle cartelle desiderate e copiato sull'altro container:
+Per utilizzare questo metodo semplicemente seguire allo stesso modo le istruzioni spiegati nella guida per il [setup del target](#setup-target) in un container armhf. Per copiare i file dal container armhf a quello per la compilazione è stato fatto un archivio delle cartelle desiderate e copiato sull'altro container:
 ```bash
 # Da eseguire sul container armhf
-tar -cf - /lib /usr /etc | gzip > rootfs.tar.gz
+symlinks -cr  /lib /usr /etc
+tar -cvf - /lib /usr /etc | gzip > rootfs.tar.gz
 
 # Da eseguire sul container per la compilazione dopo aver copiato l'archivio
 cd /opt/rootfs
 tar -xzf rootfs.tar.gz
 ```
 > **ATTENZIONE!** \
-> Copiare i file facendone un archivio ha il lato negativo di rompere moltissimi symbolic links che sono utilizzati per trovare le librerie durante la compilazione e che devono essere aggiustati manualmente in seguito (vedere [troubleshooting](#troubleshooting)).
+> Copiare i file facendone un archivio ha il lato negativo di poter rompere alcuni symbolic links che sono utilizzati per trovare le librerie durante la compilazione e che devono essere aggiustati manualmente in seguito (vedere [troubleshooting](#troubleshooting)).
 
 # Troubleshooting
 
+- **Versione GLIBC non corretta**: usare lo stesso sistema operativo sia per la compilazione che per il target e aggiornare tutti i pacchetti. Verificare le versioni con i comandi `ld --version` `ldd --version`
+- **Libreria non trovata durante la compilazione**: verificare di averla installata sul dispositivo target e di aver copiato il file system sul'host come descritto nella guida. Se l'errore persiste verificare che il file specificato non sia un link che indica un path inesistente e nel caso correggerlo. 
+- **Libreria viene cercata sul dispositivo host**: creare un link simbolico che punta alla file corretto all'interno della cartella `/opt/rootfs`
+- **Errore durante la compilazione di iceoryx**: il pacchetto è stato disabilitato in quanto genera un errore di compilazione. ROS funziona comunque anche senza. 
+- **All'avvio di ROS2 errore riguardo a '_rclpy_pybind11.cpython-38-x86_64-linux-gnu.so'**: seguire le [istruzioni di installazione](./install_tutorial.md#unpack-binaries)
+- **pybind11_vendor: Python 64-bit but compiler 32-bit**: verificare le variabili di ambiente relative al `PYTHON_EXECUTABLE`, `LD_LIBRARY` siano corrette sia nel file `toolchain.cmake` e `build_ros.bash`. 

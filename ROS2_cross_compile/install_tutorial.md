@@ -1,6 +1,10 @@
 # ROS2 Humble per armhf
+|	|	|
+| :--- 		| :--- 		|
+| **Platform**		| NanoPi NEO Air|
+| **OS** 	| Ubuntu 20.04	|
+| **ROS2 version** 	| Humble 				|
 ## Setup target
-**Testato su Ubuntu 20.04** 
 
 Comandi da eseguire sulla piattaforma target (obbligatori)
 ```bash
