@@ -9,17 +9,11 @@ import time
 from rclpy.node import Node
 from rclpy.clock import Clock
 from rclpy import utilities
+import launch
 
 from px4_msgs.msg import OffboardControlMode
 from px4_msgs.msg import TrajectorySetpoint
 from px4_msgs.msg import VehicleCommand
-from px4_msgs.msg import VehicleOdometry
-from px4_msgs.msg import VehicleAttitude
-
-from rclpy.qos import (
-    QoSProfile, 
-    QoSReliabilityPolicy, 
-    QoSHistoryPolicy)
 
 
 
@@ -27,10 +21,10 @@ class OffboardControl(Node):
 
     def __init__(self):
         super().__init__('OffboardControl')
+        
         self.offboard_control_mode_publisher_ = self.create_publisher(OffboardControlMode,"/fmu/in/offboard_control_mode", 10)
         self.trajectory_setpoint_publisher_ = self.create_publisher(TrajectorySetpoint,"/fmu/in/trajectory_setpoint", 10)
         self.vehicle_command_publisher_ = self.create_publisher(VehicleCommand,"/fmu/in/vehicle_command", 10)
-
 
         self.offboard_setpoint_counter_ = 0
         # Stato missione per macchina a stati
@@ -42,19 +36,8 @@ class OffboardControl(Node):
         self.timer_offboard = self.create_timer(0.1, self.timer_offboard_cb)
         self.timer_mission = self.create_timer(8, self.mission)
 
-        ## ------- FAKE MOCAP --------- ##
-        qos_profile = QoSProfile(
-            reliability=QoSReliabilityPolicy.BEST_EFFORT,
-            history=QoSHistoryPolicy.KEEP_LAST,
-            depth=1
-        )
-        self.attitude_sub =     self.create_subscription(VehicleAttitude,'/fmu/out/vehicle_attitude', self.attitude_cb, qos_profile)
-        self.fake_mocap_publisher_ = self.create_publisher(VehicleOdometry, "/fmu/in/vehicle_visual_odometry", 10)
-        self.timer_fake_mocap = self.create_timer(0.033, self.fake_mocap_cb)
-        self.timestamp = 0
-        self.timestamp_sample = 0     
+         
     
-
     def mission(self):
         """ Funzione mission organizzata come macchina a stati """
 
@@ -67,18 +50,16 @@ class OffboardControl(Node):
         elif self.mission_state == 1:
             self.arm()
             self.get_logger().info("Vehicle armed")
-            self.mission_state = 4
-            return
             # Imposta il primo waypoint
             self.get_logger().info("First waypoint")
             self.current_waypoint = [0.0, 0.0, -5.0]
-            self.mission_state = 1
+            self.mission_state = 2
 
         elif self.mission_state == 2:
             """Waypoint 2"""
             self.get_logger().info("Second waypoint")
             # Imposta secondo waypoint
-            self.current_waypoint = [2.0, 2.0, -4.0]
+            self.current_waypoint = [3.0, 3.0, -4.0]
             self.mission_state = 3
 
         elif self.mission_state == 3:
@@ -88,10 +69,11 @@ class OffboardControl(Node):
             self.mission_state = 4
         
         elif self.mission_state == 4:
+            self.disarm()
             self.timer_offboard.cancel()
             self.get_logger().info("Mission finished")
             self.timer_mission.cancel()
-            exit() 
+            
     
     def timer_offboard_cb(self):
         # Funzione richiamata ogni 20ms e invia i seguenti messaggi
@@ -155,26 +137,6 @@ class OffboardControl(Node):
         msg.from_external = True
         msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
         self.vehicle_command_publisher_.publish(msg)
-
-    def fake_mocap_cb(self):
-        mocap_msg = VehicleOdometry()
-        mocap_msg.timestamp = self.timestamp
-        mocap_msg.pose_frame = VehicleOdometry.POSE_FRAME_NED
-        mocap_msg.position = [0.0, 0.0, 0.0]  # Always publish zero
-        mocap_msg.velocity_frame = VehicleOdometry.VELOCITY_FRAME_UNKNOWN
-        mocap_msg.velocity =         [float('NaN'), float('Nan'), float('Nan')]
-        mocap_msg.angular_velocity = [float('NaN'), float('Nan'), float('Nan')]
-        mocap_msg.position_variance =    [float('NaN'), float('Nan'), float('Nan')]
-        mocap_msg.orientation_variance = [float('NaN'), float('Nan'), float('Nan')]
-        mocap_msg.velocity_variance =    [float('NaN'), float('Nan'), float('Nan')]
-        mocap_msg.quality = 1
-        # self.fake_mocap_publisher_.publish(mocap_msg)
-
-    def attitude_cb(self, msg : VehicleAttitude):
-        self.attitude_msg = msg
-        # Store PX4 timestamp
-        self.timestamp = msg.timestamp
-        self.timestamp_sample = msg.timestamp_sample
     
 
 def main(args=None):
