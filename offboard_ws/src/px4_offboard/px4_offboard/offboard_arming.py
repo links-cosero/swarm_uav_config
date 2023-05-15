@@ -5,15 +5,13 @@ Python implementation of Offboard Control
 
 
 import rclpy
-import time
 from rclpy.node import Node
 from rclpy.clock import Clock
 from rclpy import utilities
 
 from px4_msgs.msg import OffboardControlMode
-from px4_msgs.msg import TrajectorySetpoint
 from px4_msgs.msg import VehicleCommand
-from px4_msgs.msg import VehicleStatus
+from px4_msgs.msg import VehicleAttitudeSetpoint
 
 
 
@@ -23,15 +21,12 @@ class OffboardControl(Node):
         super().__init__('OffboardControl')
         
         self.offboard_control_mode_publisher_ = self.create_publisher(OffboardControlMode,"/fmu/in/offboard_control_mode", 10)
-        self.trajectory_setpoint_publisher_ = self.create_publisher(TrajectorySetpoint,"/fmu/in/trajectory_setpoint", 10)
+        self.vehicle_attitude_setpoint_publisher_ = self.create_publisher(VehicleAttitudeSetpoint,"/fmu/in/vehicle_attitude_setpoint", 10)
         self.vehicle_command_publisher_ = self.create_publisher(VehicleCommand,"/fmu/in/vehicle_command", 10)
-        self.vehicle_status_publisher_ = self.create_publisher(VehicleStatus,"/fmu/in/vehicle_status", 10)
 
         self.offboard_setpoint_counter_ = 0
         # Stato missione per macchina a stati
         self.mission_state = 0
-        # Waypoint corrente pubblicato da timer_offboard_cb()
-        self.current_waypoint = [0.0, 0.0, -5.0]
 
         # Timers
         self.timer_offboard = self.create_timer(0.5, self.timer_offboard_cb)
@@ -51,45 +46,27 @@ class OffboardControl(Node):
         elif self.mission_state == 1:    
             self.arm()
             self.get_logger().info("Vehicle armed")
-            # Imposta il primo waypoint
-            # self.get_logger().info("First waypoint")
-            # self.current_waypoint = [0.0, 0.0, -5.0]
             self.mission_state = 3
-
-        # elif self.mission_state == 1:
-        #     """Waypoint 2"""
-        #     self.get_logger().info("Second waypoint")
-        #     # Imposta secondo waypoint
-        #     self.current_waypoint = [2.0, 2.0, -4.0]
-        #     self.mission_state = 2
-
-        # elif self.mission_state == 2:
-        #     """Landing"""
-        #     self.get_logger().info("Landing request")
-        #     self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
-        #     self.mission_state = 3
         
-        # elif self.mission_state == 3:
-        #      self.timer_offboard.cancel()
-        #      self.get_logger().info("Mission finished")
-        #      self.timer_mission.cancel()
-        #      exit() 
+        elif self.mission_state == 2:
+            self.get_logger().info("Attitude Setpoint sent")
+             
     
     def timer_offboard_cb(self):
         # Funzione richiamata ogni 20ms e invia i seguenti messaggi
         self.publish_offboard_control_mode()
-        # self.publish_trajectory_setpoint()
+        self.publish_vehicle_attitude_setpoint()
 
 
     # Arm the vehicle
     def arm(self):
         self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0)
-        self.get_logger().info("Arm command send")
+        self.get_logger().info("Arm command sent")
 
     # Disarm the vehicle
     def disarm(self):
         self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0)
-        self.get_logger().info("Disarm command send")
+        self.get_logger().info("Disarm command sent")
 
     '''
 	Publish the offboard control mode.
@@ -112,12 +89,12 @@ class OffboardControl(Node):
 	vehicle hover at 5 meters with a yaw angle of 180 degrees.
     '''
 
-    def publish_trajectory_setpoint(self):
-        msg = TrajectorySetpoint()
-        msg.position = self.current_waypoint# [0.0, 0.0, -5.0] 
-        msg.yaw = -3.14  # [-PI:PI]
+    def publish_vehicle_attitude_setpoint(self):
+        msg = VehicleAttitudeSetpoint()
+        msg.q_d  = [1,0,0,0] # no rotation
+        msg.thrust_body = [0.5,0.5,0.5] # ENU-> NED conversion required?
         msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
-        self.trajectory_setpoint_publisher_.publish(msg)
+        self.vehicle_attitude_setpoint_publisher_.publish(msg)
 
     '''
     Publish vehicle commands
