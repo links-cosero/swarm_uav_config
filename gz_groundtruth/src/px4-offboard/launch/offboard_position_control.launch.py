@@ -53,7 +53,7 @@ def generate_launch_description():
         Node(
             package='px4_offboard',
             namespace='px4_offboard',
-            executable='offboard_control',
+            executable='offboard_uav',
             name='control'
         ),
         Node(
