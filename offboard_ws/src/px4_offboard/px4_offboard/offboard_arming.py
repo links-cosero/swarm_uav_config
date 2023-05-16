@@ -4,7 +4,8 @@ Python implementation of Offboard Control
 """
 
 
-import rclpy
+import rclpy 
+import numpy as np
 from rclpy.node import Node
 from rclpy.clock import Clock
 from rclpy import utilities
@@ -38,7 +39,7 @@ class OffboardControl(Node):
         """ Funzione mission organizzata come macchina a stati """
 
         if self.mission_state == 0:
-            """ Arming and takeoff to 1st waypoint """
+            """ Arming and no moving setpoint """
             self.get_logger().info("Mission started")
             self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1., 6.)
             self.mission_state = 1
@@ -46,16 +47,16 @@ class OffboardControl(Node):
         elif self.mission_state == 1:    
             self.arm()
             self.get_logger().info("Vehicle armed")
-            self.mission_state = 3
+            self.mission_state = 2
         
         elif self.mission_state == 2:
             self.get_logger().info("Attitude Setpoint sent")
-             
+            self.publish_vehicle_attitude_setpoint()
+            self.mission_state = 3 
     
     def timer_offboard_cb(self):
-        # Funzione richiamata ogni 20ms e invia i seguenti messaggi
         self.publish_offboard_control_mode()
-        self.publish_vehicle_attitude_setpoint()
+        
 
 
     # Arm the vehicle
@@ -84,15 +85,27 @@ class OffboardControl(Node):
         self.offboard_control_mode_publisher_.publish(msg)
 
     '''
-	Publish a trajectory setpoint
-	For this example, it sends a trajectory setpoint to make the
-	vehicle hover at 5 meters with a yaw angle of 180 degrees.
+	Publish a Vehicle Attitude setpoint
+    with no rotation and half throttle speed in order to arm the drone
     '''
+    def ENU2NED_vector_converter(self, vect):
+        vect = np.array(vect)
+        #Rotation around Z-axis
+        rotZ = np.asfarray(np.array([[np.cos(np.pi/2), -np.sin(np.pi/2), 0],
+                                     [np.sin(np.pi/2), np.cos(np.pi/2), 0], 
+                                     [0, 0, 1]]), dtype = np.float32)
+        var = np.dot(rotZ,vect)
+        rotX = np.asfarray(np.array([[1, 0, 0],
+                                    [0, np.cos(np.pi/2), -np.sin(np.pi/2)], 
+                                    [0, np.sin(np.pi/2), -np.cos(np.pi/2)]]), dtype = np.float32)
+        var = np.dot(rotZ,var)
+        return var
 
     def publish_vehicle_attitude_setpoint(self):
         msg = VehicleAttitudeSetpoint()
-        msg.q_d  = [1.0,0.0,0.0,0.0] # no rotation
-        msg.thrust_body = [0.5,0.5,0.5] # ENU-> NED conversion required?
+        msg.q_d  = np.asfarray([1, 0, 0, 0], dtype = np.float32)# no rotation
+        msg.thrust_body = np.asfarray([0, 0, -1], dtype = np.float32) # half-throttle
+        msg.thrust_body = self.ENU2NED_vector_converter(msg.thrust_body)
         msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
         self.vehicle_attitude_setpoint_publisher_.publish(msg)
 
