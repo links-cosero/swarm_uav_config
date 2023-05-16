@@ -11,6 +11,7 @@ export C_INCLUDE_PATH="/opt/rootfs/usr/include:/opt/rootfs/usr/include/arm-linux
 export CPLUS_INCLUDE_PATH="/opt/rootfs/usr/include:/opt/rootfs/usr/include/arm-linux-gnueabihf:/opt/rootfs/usr/lib/arm-linux-gnueabihf"
 export LD_LIBRARY_PATH=/opt/rootfs/lib/arm-linux-gnueabihf:/opt/rootfs/lib
 export PYTHON_EXECUTABLE=/opt/rootfs/usr/bin/python3.8
+export ROS2_INSTALL_PATH=/opt/ros2_humble/install
 if [ ! -e /lib/ld-linux-armhf.so.3 ]
 then
     ln -s /opt/rootfs/lib/ld-linux-armhf.so.3 /lib/ld-linux-armhf.so.3

@@ -153,9 +153,7 @@ class MocapNode (Node):
         odom_msg.orientation_variance = [float('NaN'), float('Nan'), float('Nan')]
         odom_msg.velocity_variance =    [float('NaN'), float('Nan'), float('Nan')]
         odom_msg.quality = 1
-        return odom_msg self.create
-        self.fake_mocap = self.create_publisher(VehicleOdometry, "/fmu/in/vehicle_visual_odometry", 10)
-        self.timer_fake_mocap = sel
+        return odom_msg
     
     def local_pos_cb(self, msg : VehicleLocalPosition):
         """

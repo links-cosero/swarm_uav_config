@@ -62,6 +62,10 @@ if [ ! -e /lib/ld-linux-armhf.so.3 ]
 then
     ln -s /opt/rootfs/lib/ld-linux-armhf.so.3 /lib/ld-linux-armhf.so.3
 fi
+if [ ! -e /usr/include/eigen3 ]
+then ln -s /opt/rootfs/usr/include/eigen3 /usr/include/eigen3
+fi
+
 
 colcon build \
     $@ \
