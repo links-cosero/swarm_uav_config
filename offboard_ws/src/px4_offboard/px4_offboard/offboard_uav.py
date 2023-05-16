@@ -20,6 +20,7 @@ from rclpy.qos import (
     QoSProfile, 
     QoSReliabilityPolicy, 
     QoSHistoryPolicy)
+from px4_msgs.msg import VehicleStatus
 
 
 
@@ -30,6 +31,7 @@ class OffboardControl(Node):
         self.offboard_control_mode_publisher_ = self.create_publisher(OffboardControlMode,"/fmu/in/offboard_control_mode", 10)
         self.trajectory_setpoint_publisher_ = self.create_publisher(TrajectorySetpoint,"/fmu/in/trajectory_setpoint", 10)
         self.vehicle_command_publisher_ = self.create_publisher(VehicleCommand,"/fmu/in/vehicle_command", 10)
+        self.vehicle_status_publisher_ = self.create_publisher(VehicleStatus,"/fmu/in/vehicle_status", 10)
 
 
         self.offboard_setpoint_counter_ = 0
@@ -96,7 +98,7 @@ class OffboardControl(Node):
     def timer_offboard_cb(self):
         # Funzione richiamata ogni 20ms e invia i seguenti messaggi
         self.publish_offboard_control_mode()
-        self.publish_trajectory_setpoint()
+        # self.publish_trajectory_setpoint()
 
 
     # Arm the vehicle
