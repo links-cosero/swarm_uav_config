@@ -91,7 +91,7 @@ class OffboardControl(Node):
 
     def publish_vehicle_attitude_setpoint(self):
         msg = VehicleAttitudeSetpoint()
-        msg.q_d  = [1,0,0,0] # no rotation
+        msg.q_d  = [1.0,0.0,0.0,0.0] # no rotation
         msg.thrust_body = [0.5,0.5,0.5] # ENU-> NED conversion required?
         msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
         self.vehicle_attitude_setpoint_publisher_.publish(msg)
