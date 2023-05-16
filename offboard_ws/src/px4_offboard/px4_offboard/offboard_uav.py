@@ -13,9 +13,7 @@ from rclpy import utilities
 from px4_msgs.msg import OffboardControlMode
 from px4_msgs.msg import TrajectorySetpoint
 from px4_msgs.msg import VehicleCommand
-<<<<<<< HEAD
 from px4_msgs.msg import VehicleStatus
-=======
 from px4_msgs.msg import VehicleOdometry
 from px4_msgs.msg import VehicleAttitude
 
@@ -23,8 +21,6 @@ from rclpy.qos import (
     QoSProfile, 
     QoSReliabilityPolicy, 
     QoSHistoryPolicy)
->>>>>>> 5138712233f967c65da0673d68f3d75caf9be36a
-
 
 
 class OffboardControl(Node):
@@ -44,13 +40,8 @@ class OffboardControl(Node):
         self.current_waypoint = [0.0, 0.0, -5.0]
 
         # Timers
-<<<<<<< HEAD
-        self.timer_offboard = self.create_timer(0.5, self.timer_offboard_cb)
-        self.timer_mission = self.create_timer(10, self.mission)
-=======
         self.timer_offboard = self.create_timer(0.1, self.timer_offboard_cb)
         self.timer_mission = self.create_timer(8, self.mission)
->>>>>>> 5138712233f967c65da0673d68f3d75caf9be36a
 
         ## ------- FAKE MOCAP --------- ##
         qos_profile = QoSProfile(
@@ -74,40 +65,12 @@ class OffboardControl(Node):
             self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1., 6.)
             self.mission_state = 1
 
-<<<<<<< HEAD
         elif self.mission_state == 1:    
-=======
-        elif self.mission_state == 1:
->>>>>>> 5138712233f967c65da0673d68f3d75caf9be36a
             self.arm()
             self.get_logger().info("Vehicle armed")
             self.mission_state = 4
             return
             # Imposta il primo waypoint
-<<<<<<< HEAD
-            # self.get_logger().info("First waypoint")
-            # self.current_waypoint = [0.0, 0.0, -5.0]
-            self.mission_state = 3
-
-        # elif self.mission_state == 1:
-        #     """Waypoint 2"""
-        #     self.get_logger().info("Second waypoint")
-        #     # Imposta secondo waypoint
-        #     self.current_waypoint = [2.0, 2.0, -4.0]
-        #     self.mission_state = 2
-
-        # elif self.mission_state == 2:
-        #     """Landing"""
-        #     self.get_logger().info("Landing request")
-        #     self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
-        #     self.mission_state = 3
-        
-        # elif self.mission_state == 3:
-        #      self.timer_offboard.cancel()
-        #      self.get_logger().info("Mission finished")
-        #      self.timer_mission.cancel()
-        #      exit() 
-=======
             self.get_logger().info("First waypoint")
             self.current_waypoint = [0.0, 0.0, -5.0]
             self.mission_state = 1
@@ -129,13 +92,12 @@ class OffboardControl(Node):
             self.timer_offboard.cancel()
             self.get_logger().info("Mission finished")
             self.timer_mission.cancel()
-            exit() 
->>>>>>> 5138712233f967c65da0673d68f3d75caf9be36a
+            exit()        
     
     def timer_offboard_cb(self):
         # Funzione richiamata ogni 20ms e invia i seguenti messaggi
         self.publish_offboard_control_mode()
-        # self.publish_trajectory_setpoint()
+        self.publish_trajectory_setpoint()
 
 
     # Arm the vehicle
