@@ -4,7 +4,7 @@
 
 | Software | Version |
 | --- | --- |
-| PX4 | v1.13 |
+| PX4 | v1.14-beta2 |
 | Gazebo | Garden |
 | ROS2 | Humble |
 | Ubuntu | 22.04 LTS |
@@ -125,7 +125,7 @@ Per la configurazione di Rviz ho sovrascritto il file `gz_groundtruth/src/px4-of
 
 # PX4 Visual Odometry
 
-I contenuti principali sono stati presi da [questa pagina di documentazione](https://dev.px4.io/v1.11_noredirect/en/ros/external_position_estimation.html). 
+I contenuti principali sono stati presi da [questa pagina di documentazione](https://docs.px4.io/main/en/ros/external_position_estimation.html) 
 
 I dati di odometria visuale sono inviati a PX4 tramite il messaggio `vehicle_visual_odometry` in quanto è l'unico supportato dal filtro EKF2 (altrimenti va usato LPE). Vengono per ora inviati nel messaggio solo informazioni sulla posizione e orientamento e non sulle velocità. Attualmente ci sono ancora problemi sull’effettuare le trasformazioni corrette per l’orientazione, quindi per ora funziona solo l’invio della posizione. 
 
