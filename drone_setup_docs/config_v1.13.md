@@ -115,7 +115,7 @@ Check also for motor direction of rotation. Swapping can be done setting paramet
 # PID Tuning 
 **TODO**
 
-# SD Card and System Startup (To test)
+# SD Card and System Startup
 
 We can customize the commands that are executed during the startup of the drone, for example we can automatically execute `microdds_client`. To do this we have to modify directly files on the SD card used in the flight controller. 
 
@@ -139,3 +139,7 @@ To check if the setup is working and fly the drone
 - Arm the drone pulling the throttle all the way down to zero and move the arm switch
 
 After the arming all the motors should start spinning slowly, then slowly releasing the throttle lever should make the blades spin faster and make the drone takeoff. 
+
+# Offboard configuration
+Check the guide about [offboard](../gz_groundtruth/README.md), in particular the set of [parameters](../gz_groundtruth/README.md#parametri-da-impostare-su-px4) to set.  
+To enable offboard mode using the XRCE-DDS bridge check the [official documentation](https://docs.px4.io/main/en/flight_modes/offboard.html#offboard-mode). To enable this mode we need to stream a message to the topic `/fmu/in/offboard_control_mode` with a frequency higher than 2Hz. In particular this message set how we want to control the drone: if we set `position=True` then the drone expect some form of position information, that in our case is VICON since we don't have the GPS. **Note that the onboard IMU does not give position information**. 

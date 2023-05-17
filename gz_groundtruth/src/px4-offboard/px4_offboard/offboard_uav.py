@@ -65,7 +65,8 @@ class OffboardControl(Node):
         elif self.mission_state == 3:
             """Landing"""
             self.get_logger().info("Landing request")
-            self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
+            self.current_waypoint = [0.0, 0.0, 0.0]
+            # self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
             self.mission_state = 4
         
         elif self.mission_state == 4:

@@ -103,11 +103,19 @@ velocity = float('NaN')
 
 Importante impostare correttamente il parametro `timestamp` e `timestamp_sample`: il primo rappresenta il momento di invio del messaggio e il secondo il momento di campionamento. Se impostati non correttamente lo stimatore EFK2 ignorerà i campioni inviati. Per impostarli correttamente bisogna fare riferimento al tempo utilizzato a bordo di PX4 e non semplicemente il timestamp preso dal PC: come soluzione temporanea il nodo motion_capture copia il timestamp pubblicato sul topic `/fmu/out/vehicle_attitude` e lo inserisce nel messaggio `vehicle_visual_odometry`. 
 
-## Parametri da impostare su PX4 (Work in progress)
+## Parametri da impostare su PX4
 
 Oltre a inviare i dati di odometria bisogna anche impostare alcuni parametri da QGroundControl per far si che la odometria visuale sia utilizzata come fonte primaria:
 
-- EKF2_BARO_CTRL = Disabled
-- EKF2_EV_CTRL = 3 (Horizontal+Vertical Positioning)
-- EKF2_EV_DELAY = 10.0ms (L’ho deciso io può essere anche diverso)
-- EKF2_HGT_REF = Vision
+|**Parameter**| **Value**|
+|:---|:---|
+|EKF2_MULTI_IMU | 1|
+|EKF2_IMU_CTRL | 1|
+|EKF2_BARO_CTRL | Disabled|
+|EKF2_EV_CTRL | 11 (Horizontal+Vertical+Yaw Positioning)|
+|EKF2_EV_DELAY | 10.0ms (L’ho deciso io può essere anche diverso)|
+|EKF2_HGT_REF | Vision|
+|EKF2_EV_NOISE_MD | EV noise parameters|
+|SYS_HAS_GPS | 0|
+|GPS_CHECK | 240|
+|GPS_CTRL | 4|

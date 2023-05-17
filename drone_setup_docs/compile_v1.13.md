@@ -53,6 +53,26 @@ Nell'esempio sopra riportato nella configurazione utilizzata in laboratorio sono
 - Rimozione driver GPS e Telemetria FRSKY
 - Aggiunta modulo filtro Kalman EKF2
 
+## UPDATE (WIP)
+Configurazione minima dei moduli per far funzionare l'arming da offboard e dati da sistema VICON:
+- commander
+- control_allocator
+- dataman
+- ekf2
+  - multi-EKF (IMPORTANTE!!)
+  - barometer-compensation
+  - external vision
+- land detector
+- logger
+- manual_control
+- mc_att_control
+- mc_pos_control
+- mc_rate_control
+- navigator
+- rc_update
+- sensors (tutti tranne airspeed)
+- uxrce_dds_client
+
 <!-- ```bash
 CONFIG_MODULES_MICRORTPS_BRIDGE=y
 CONFIG_MODULES_MICRODDS_CLIENT=y
