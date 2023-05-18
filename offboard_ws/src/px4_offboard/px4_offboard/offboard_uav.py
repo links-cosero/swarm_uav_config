@@ -41,7 +41,7 @@ class OffboardControl(Node):
 
         # Timers
         self.timer_offboard = self.create_timer(0.1, self.timer_offboard_cb)
-        self.timer_mission = self.create_timer(5, self.mission)
+        self.timer_mission = self.create_timer(8, self.mission)
 
         ## ------- FAKE MOCAP --------- ##
         qos_profile = QoSProfile(
@@ -122,7 +122,7 @@ class OffboardControl(Node):
         msg.acceleration = False
         msg.attitude = False
         msg.body_rate = False
-        msg.timestamp = self.timestamp #int(Clock().now().nanoseconds / 1000) # time in microseconds
+        msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
         self.offboard_control_mode_publisher_.publish(msg)
 
     '''
@@ -135,7 +135,7 @@ class OffboardControl(Node):
         msg = TrajectorySetpoint()
         msg.position = self.current_waypoint# [0.0, 0.0, -5.0] 
         msg.yaw = -3.14  # [-PI:PI]
-        msg.timestamp = self.timestamp #int(Clock().now().nanoseconds / 1000) # time in microseconds
+        msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
         
         self.trajectory_setpoint_publisher_.publish(msg)
 
@@ -152,7 +152,7 @@ class OffboardControl(Node):
         msg.command = command  # command ID
         msg.target_system = 1  # system which should execute the command
         msg.target_component = 1  # component which should execute the command, 0 for all components
-        msg.source_system = 10  # system sending the command
+        msg.source_system = 1  # system sending the command
         msg.source_component = 1  # component sending the command
         msg.from_external = True
         msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
@@ -160,12 +160,12 @@ class OffboardControl(Node):
 
     def fake_mocap_cb(self):
         mocap_msg = VehicleOdometry()
-        mocap_msg.timestamp = self.timestamp
-        mocap_msg.timestamp_sample = self.timestamp_sample
+        mocap_msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
+        mocap_msg.timestamp_sample = int(Clock().now().nanoseconds / 1000) # time in microseconds
         mocap_msg.pose_frame = VehicleOdometry.POSE_FRAME_NED
         mocap_msg.position = [0.0, 0.0, 0.0]  # Always publish zero
-        # mocap_msg.q = [0.0, 0.0, 0.0, 1.0]
-        mocap_msg.velocity_frame = VehicleOdometry.VELOCITY_FRAME_UNKNOWN
+        mocap_msg.q = [1.0, 0.0, 0.0, 0.0]
+        mocap_msg.velocity_frame = VehicleOdometry.VELOCITY_FRAME_NED
         mocap_msg.velocity =         [float('NaN'), float('Nan'), float('Nan')]
         mocap_msg.angular_velocity = [float('NaN'), float('Nan'), float('Nan')]
         mocap_msg.position_variance =    [float('NaN'), float('Nan'), float('Nan')]

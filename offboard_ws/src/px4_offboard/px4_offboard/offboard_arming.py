@@ -76,10 +76,10 @@ class OffboardControl(Node):
 
     def publish_offboard_control_mode(self):
         msg = OffboardControlMode()
-        msg.position = True
+        msg.position = False
         msg.velocity = False
         msg.acceleration = False
-        msg.attitude = False
+        msg.attitude = True
         msg.body_rate = False
         msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
         self.offboard_control_mode_publisher_.publish(msg)
