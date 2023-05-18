@@ -107,15 +107,26 @@ Importante impostare correttamente il parametro `timestamp` e `timestamp_sample`
 
 Oltre a inviare i dati di odometria bisogna anche impostare alcuni parametri da QGroundControl per far si che la odometria visuale sia utilizzata come fonte primaria:
 
+Se non si può accedere a QGC questi valori si possono impostare da dentro la SD_CARD creando mettendoli dentro il file extra.txt dentro la cartella etc scrivendo ciascun parametro con il suffisso param set.
+
 |**Parameter**| **Value**|
 |:---|:---|
+|COM_CPU_MAX | -1|
+|SYS_MC_EST_GROUP | 2|
+|COM_ARM_WO_GPS | 1|
 |EKF2_MULTI_IMU | 1|
 |EKF2_IMU_CTRL | 1|
-|EKF2_BARO_CTRL | Disabled|
+|EKF2_BARO_CTRL | 0 (Disabled)|
 |EKF2_EV_CTRL | 11 (Horizontal+Vertical+Yaw Positioning)|
-|EKF2_EV_DELAY | 10.0ms (L’ho deciso io può essere anche diverso)|
-|EKF2_HGT_REF | Vision|
-|EKF2_EV_NOISE_MD | EV noise parameters|
+|EKF2_EV_DELAY | 10 (10ms, L’ho deciso io può essere anche diverso)|
+|EKF2_HGT_REF | 3 (Vision)|
+|EKF2_EV_NOISE_MD | 1 (EV noise parameters)|
 |SYS_HAS_GPS | 0|
 |GPS_CHECK | 240|
 |GPS_CTRL | 4|
+PWM_MAIN_TIM0| 0|
+PWM_MAIN_TIM1| -3|
+PWM_MAIN_FUNC1| 101|
+PWM_MAIN_FUNC2| 102|
+PWM_MAIN_FUNC3| 103|
+PWM_MAIN_FUNC4| 104|
