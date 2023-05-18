@@ -134,7 +134,10 @@ La password da digitare è ```fa```. Dopodiché la connessione dovrebbe avvenire
 Seguita [questa guida](https://docs.ros.org/en/humble/Installation/Alternatives/Ubuntu-Development-Setup.html). 
 Fallisce perchè probabilmente manca abbastanza RAM (solo 500 MB disponibili).
 
-## Docker
+## Cross compilation
+Sequire [questi passaggi](../ROS2_cross_compile/install_tutorial.md) per utilizzare ROS2 sulla NanoPi NEO Air. 
+
+<!-- ## Docker
 La [repository ufficiale docker](https://hub.docker.com/_/ros/) di ROS ha disponibili le immagini di tutte le versioni, però solamente alcune sono disponibili per l'architettura `arm32v7` che è quella della NanoPi. 
 
 Per installare la Docker Engine sulla NanoPi è stata seguita [questa guida](https://docs.docker.com/engine/install/ubuntu/). Dopo aver compilato una immagine di prova per arm32v7 sul PC, per caricarla ed eseguirla sulla NanoPi:
@@ -154,14 +157,19 @@ Per creare un container da avviare più volte (diminuisce molto il tempo di avvi
 docker create --name my_container my_image_name
 # Per avviarlo
 docker start my_container 
-```
+``` -->
 
 
 ## Comunicazione MicroXRCEAgent
-La companion computer è connessa al flight controller tramite un collegamento UART. Sulla companion computer è stato installato il software MicroXRCEAgent [seguendo queste istruzioni](https://micro-xrce-dds.docs.eprosima.com/en/latest/installation.html#installing-the-agent-standalone). Per avviare l'agent:
+La companion computer è connessa al flight controller tramite un collegamento UART. Sulla companion computer è stato installato il software MicroXRCEAgent attraverso snap:
 ```bash
-cd Micro-XRCE-DDS-Agent/build
-./MicroRTPSAgent serial -D /dev/ttyS0
+sudo apt update
+sudo apt install snapd
+sudo snap install micro-xrce-dds-agent --edge
+```
+Per avviare l'agent (fare l'accesso con utente root):
+```bash
+micro-xrce-dds-agent serial -D /dev/ttyS0 -b 1500000
 ```
 Ora eseguendo ROS 2 sulla ground station sarà in grado di ricevere i topic pubblicati dall'agent(che viene eseguito sulla companion computer), verificabile con il comando `ros2 topic list`. 
 

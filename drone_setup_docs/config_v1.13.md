@@ -121,7 +121,7 @@ We can customize the commands that are executed during the startup of the drone,
 
 [To execute modules](https://docs.px4.io/main/en/concept/system_startup.html) during the start of the system we have to add to the SD card the file `etc/extras.txt` that contains the command:
 ```bash
-microdds_client start -t udp -p 8888 # avvio client XRCE con UDP
+uxrce_dds_client start -t serial -d /dev/ttyS2 -b 1500000 # avvio client XRCE per UART con NanoPi
 ```
 Another useful file to place in the SD card is `/etc/config.txt` where parameters can be set, for example for motors like:
 ```bash

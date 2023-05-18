@@ -54,6 +54,8 @@ Nell'esempio sopra riportato nella configurazione utilizzata in laboratorio sono
 - Aggiunta modulo filtro Kalman EKF2
 
 ## UPDATE (WIP)
+**Non so se funziona :(** 
+
 Configurazione minima dei moduli per far funzionare l'arming da offboard e dati da sistema VICON:
 - commander
 - control_allocator
@@ -127,7 +129,7 @@ Per eseguire comandi all’avvio della simulazione con gazebo, modificare il fil
 if px4-micrortps_client status > /dev/null 2>&1
 then
 	. px4-rc.rtps
-	microdds_client start -t udp -p 8888 # XRCE client startup
+	uxrce_dds_client start -t udp -p 8888 # XRCE client startup
 fi
 # ...
 ```
