@@ -67,7 +67,7 @@ To flash the firmware on the board:
 
 Now the firmware is flashed onto the board. We can verify in the `Summary` page under the  `Airframe -> Firmware Version` tab the version of the firmware.
 
-## Setup the firmare
+## Setup the firmware
 In QGroundControl check in the `Summary` page that there are no problems highlighted. All the problems shown here have to be resolved.
 
 Navigate then to `Vehicle Setup -> Parameters` and set the following:
@@ -97,7 +97,6 @@ Next step is to calibrate ESC:
 - open QGroundControl and connect the drone
 - navigate to `Vehicle Setup -> Power`
 - follow instructions in the tab `ESC PWM Minimum and Maximum Calibration`
-param set-default PWM_MAIN_FUNC1 101
 
 If needed the RC remote calibration and setup is also needed. To do it navigate to `Vehicle Setup -> Radio`. Also check the `Vehicle Setup -> Flight Modes` to setup the arm channel and flight modes channel. 
 
