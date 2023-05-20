@@ -153,8 +153,7 @@ Se non si può accedere a QGC questi valori si possono impostare da dentro la SD
 
 |**Parameter**| **Changed value**|**Default value**|
 |:---|:---|:---|
-
-|EKF2_BARO_CTRL | 0 (Disabled)| | 1 (Enabled)| 
+|EKF2_BARO_CTRL | 0 (Disabled)| 1 (Enabled)| 
 |EKF2_EV_CTRL | 3 (Horizontal+Vertical)| 15 (All flags selected)|
 |EKF2_EV_DELAY | 10.0 ms| 0.0 ms|
 |EKF2_HGT_REF | 3 (Vision)| 1 (GPS)|
