@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'mocap_node = motion_capture.mocap_node:main'
+            'mocap_node_classic = motion_capture.mocap_node_classic:main',
+            'mocap_node_garden = motion_capture.mocap_node_garden:main'
         ],
     },
 )

@@ -2,9 +2,6 @@
 Python implementation of Offboard Control
 
 """
-
-
-import rclpy
 import time
 from rclpy.node import Node
 from rclpy.clock import Clock

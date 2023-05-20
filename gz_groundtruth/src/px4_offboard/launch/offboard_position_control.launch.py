@@ -66,7 +66,7 @@ def generate_launch_description():
         Node(
             package='motion_capture',
             namespace='motion_capture',
-            executable='mocap_node',
+            executable='mocap_node_garden',
             name='mocap'
         )
     ])

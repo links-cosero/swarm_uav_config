@@ -31,16 +31,19 @@ class MocapNode (Node):
             history=QoSHistoryPolicy.KEEP_LAST,
             depth=1
         )
+        
         # Subscribers
         self.subscriber_ =      self.create_subscription(Odometry, '/iris/odom', self.listener_cb, 10)
         # self.px4_odom_sub =     self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.local_pos_cb, qos_profile) # DEBUG
         self.attitude_sub =     self.create_subscription(VehicleAttitude,'/fmu/out/vehicle_attitude',self.attitude_cb,qos_profile)
+        
         # Publishers
         self.pose_pub =         self.create_publisher(PoseStamped,      "/x500/pose", 10)
         # self.ned_pose_pub =     self.create_publisher(PoseStamped,      "/x500/ned_pose", 10)     # DEBUG               
         # self.ned_px4_pose_pub = self.create_publisher(PoseStamped,      "/x500/ned_px4_pose", 10) # DEBUG           
         self.path_pub =         self.create_publisher(Path,             "/x500/path", 10)
         self.mocap_odom_pub =   self.create_publisher(VehicleOdometry,  "/fmu/in/vehicle_visual_odometry", 10)
+        
         # Messages
         self.vehicle_path_msg = Path()
         self.vehicle_path_msg.header.frame_id = 'map'
@@ -52,6 +55,7 @@ class MocapNode (Node):
         self.timestamp_sample = 0
 
         self.path_cnt = 0
+        self.launch_ros_gz_bridge("/world/default/pose/info","geometry_msgs/msg/PoseArray","gz.msgs.Pose_V")
 
     def listener_cb(self, msg: Odometry):
         # Nell'array di oggetti Pose il secondo è quello del drone a cui siamo interessati. L'ho
