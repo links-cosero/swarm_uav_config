@@ -4,3 +4,6 @@
 build/
 install/
 log/
+
+/*Custom*/
+install_armhf/
