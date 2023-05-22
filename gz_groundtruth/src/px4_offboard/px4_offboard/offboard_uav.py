@@ -2,39 +2,67 @@
 Python implementation of Offboard Control
 
 """
-
-
 import rclpy
 import time
 from rclpy.node import Node
 from rclpy.clock import Clock
 from rclpy import utilities
 import launch
+from geometry_msgs.msg import Pose
+from rclpy.qos import (
+    QoSProfile, 
+    QoSReliabilityPolicy, 
+    QoSHistoryPolicy)
 
 from px4_msgs.msg import OffboardControlMode
 from px4_msgs.msg import TrajectorySetpoint
 from px4_msgs.msg import VehicleCommand
+from px4_msgs.msg import VehicleStatus
+from px4_msgs.msg import VehicleLocalPosition
+from px4_msgs.msg import VehicleOdometry
 
+from math import sqrt
 
 
 class OffboardControl(Node):
 
     def __init__(self):
         super().__init__('OffboardControl')
+        qos_profile = QoSProfile(
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=1
+        )
         
         self.offboard_control_mode_publisher_ = self.create_publisher(OffboardControlMode,"/fmu/in/offboard_control_mode", 10)
         self.trajectory_setpoint_publisher_ = self.create_publisher(TrajectorySetpoint,"/fmu/in/trajectory_setpoint", 10)
         self.vehicle_command_publisher_ = self.create_publisher(VehicleCommand,"/fmu/in/vehicle_command", 10)
 
+        self.vehicle_status_sub = self.create_subscription(VehicleStatus, "/fmu/out/vehicle_status", self.store_msg_cb, qos_profile) 
+        self.vehicle_visual_odometry_sub = self.create_subscription(VehicleOdometry, "/fmu/in/vehicle_visual_odometry", self.store_msg_cb, qos_profile)
+
+        self.vehicle_status_msg : VehicleStatus = None
+        self.vehicle_visual_odometry_msg : VehicleOdometry = None
         self.offboard_setpoint_counter_ = 0
         # Stato missione per macchina a stati
         self.mission_state = 0
         # Waypoint corrente pubblicato da timer_offboard_cb()
-        self.current_waypoint = [0.0, 0.0, -5.0]
+        self.wpt_cnt = 0
+        # [x, y, z, yaw]
+        self.waypoint_list = [
+            ( 0.0, 0.0, 0.0, 0.0),
+            ( 4.0, 4.0, -5.0, 3.14/2),
+            ( 4.0,-4.0, -5.0, 3.14),
+            (-4.0,-4.0, -5.0, -3.14/2),
+            (-4.0, 4.0, -5.0, -3.14),
+            ( 0.0, 0.0, -5.0, 0.0)
+        ]
+        self.current_waypoint = self.waypoint_list[self.wpt_cnt][0:3]
+        self.current_yaw = self.waypoint_list[self.wpt_cnt][3]
 
         # Timers
         self.timer_offboard = self.create_timer(0.1, self.timer_offboard_cb)
-        self.timer_mission = self.create_timer(8, self.mission)
+        self.timer_mission = self.create_timer(1, self.mission)
 
          
     
@@ -45,24 +73,28 @@ class OffboardControl(Node):
             """ Arming and takeoff to 1st waypoint """
             self.get_logger().info("Mission started")
             self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1., 6.)
-            self.mission_state = 1
+            self.arm()
+            if self.vehicle_status_msg.arming_state == VehicleStatus.ARMING_STATE_ARMED:
+                # If vehicle armed
+                self.get_logger().info("Vehicle armed")
+                self.mission_state = 1
+            else:
+                self.mission_state = 0
 
         elif self.mission_state == 1:
-            self.arm()
-            self.get_logger().info("Vehicle armed")
             # Imposta il primo waypoint
-            self.get_logger().info("First waypoint")
-            self.current_waypoint = [0.0, 0.0, -5.0]
-            self.mission_state = 2
+            self.current_waypoint = self.waypoint_list[self.wpt_cnt][0:3]
+            self.current_yaw = self.waypoint_list[self.wpt_cnt][3]
+            if distance(self.vehicle_visual_odometry_msg, self.current_waypoint) < 0.3: 
+                self.get_logger().info(f"Next waypoint {self.current_waypoint}")
+                self.wpt_cnt += 1 # Arrived to waypoint
+            
+            if self.wpt_cnt >= len(self.waypoint_list):
+                self.mission_state = 2
+            else:
+                self.mission_state = 1
 
         elif self.mission_state == 2:
-            """Waypoint 2"""
-            self.get_logger().info("Second waypoint")
-            # Imposta secondo waypoint
-            self.current_waypoint = [3.0, 3.0, -4.0]
-            self.mission_state = 3
-
-        elif self.mission_state == 3:
             """Landing"""
             self.get_logger().info("Landing request")
             self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
@@ -115,7 +147,7 @@ class OffboardControl(Node):
     def publish_trajectory_setpoint(self):
         msg = TrajectorySetpoint()
         msg.position = self.current_waypoint# [0.0, 0.0, -5.0] 
-        msg.yaw = -3.14  # [-PI:PI]
+        msg.yaw = self.current_yaw  # [-PI:PI]
         msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
         self.trajectory_setpoint_publisher_.publish(msg)
 
@@ -138,6 +170,27 @@ class OffboardControl(Node):
         msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
         self.vehicle_command_publisher_.publish(msg)
     
+    def store_msg_cb(self, msg) -> None:
+        """ Callback for multiple subscriptions. Detect message type and store it """
+
+        if isinstance(msg, VehicleStatus):
+            self.vehicle_status_msg = msg
+        elif isinstance(msg, VehicleOdometry):
+            self.vehicle_visual_odometry_msg = msg
+        else:
+            self.get_logger().info("Unknown message type")
+
+
+def distance(drone_pose:VehicleOdometry, waypoint:list) -> float:
+    """Distance between poses positions"""
+    delta_x = drone_pose.position[0] - waypoint[0] 
+    delta_y = drone_pose.position[1] - waypoint[1]
+    delta_z = drone_pose.position[2] - waypoint[2]
+
+    return sqrt(delta_x*delta_x + delta_y*delta_y + delta_z*delta_z)
+
+
+
 
 def main(args=None):
     rclpy.init(args=args)

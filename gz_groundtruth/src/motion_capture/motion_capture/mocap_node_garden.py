@@ -4,6 +4,7 @@ from rclpy.qos import (
     QoSProfile, 
     QoSReliabilityPolicy, 
     QoSHistoryPolicy)
+from rclpy.clock import Clock
 
 from nav_msgs.msg import Path
 from geometry_msgs.msg import (
@@ -42,12 +43,9 @@ class MocapNode (Node):
         # Messages
         self.vehicle_path_msg = Path()
         self.vehicle_path_msg.header.frame_id = 'map'
-        self.vehicle_pose_msg = PoseStamped()
         self.gz_pose_msg = Pose()
         self.mocap_odom_msg = None
         self.attitude_msg = None
-        self.timestamp = 0
-        self.timestamp_sample = 0
 
         self.path_cnt = 0
         self.launch_ros_gz_bridge("/world/default/pose/info","geometry_msgs/msg/PoseArray","gz.msgs.Pose_V")
@@ -60,15 +58,15 @@ class MocapNode (Node):
         self.gz_pose_msg : Pose = msg.poses[1]
 
         # Change ref fram to FLU and publish msg
-        self.vehicle_pose_msg = self.gazebo_to_flu_tf(self.gz_pose_msg)
-        self.pose_pub.publish(self.vehicle_pose_msg)
+        vehicle_pose_msg = self.gazebo_to_flu_tf(self.gz_pose_msg)
+        self.pose_pub.publish(vehicle_pose_msg)
         # Publish path msg
         if self.path_cnt == 0:
-            self.vehicle_path_msg.poses.append(self.vehicle_pose_msg)
+            self.vehicle_path_msg.poses.append(vehicle_pose_msg)
             self.path_pub.publish(self.vehicle_path_msg)
         self.path_cnt = (self.path_cnt + 1) % 10
         # Create mocap odometry msg and publish to PX4
-        self.mocap_odom_msg = self.create_odometry_msg(self.vehicle_pose_msg.pose)
+        self.mocap_odom_msg = self.create_odometry_msg(vehicle_pose_msg.pose)
         self.mocap_odom_pub.publish(self.mocap_odom_msg)
 
         # ned_pos = PoseStamped()
@@ -98,18 +96,20 @@ class MocapNode (Node):
         vehicle_pose_msg = PoseStamped()
         vehicle_pose_msg.header.frame_id='map'
         # Position
-        vehicle_pose_msg.pose.position.x =  gz_pose.position.y
-        vehicle_pose_msg.pose.position.y = -gz_pose.position.x
-        vehicle_pose_msg.pose.position.z =  gz_pose.position.z
+        vehicle_pose_msg.pose.position = gz_pose.position
+        # vehicle_pose_msg.pose.position.x =  gz_pose.position.y
+        # vehicle_pose_msg.pose.position.y = -gz_pose.position.x
+        # vehicle_pose_msg.pose.position.z =  gz_pose.position.z
         # Orientation
-        x_gz = gz_pose.orientation.x
-        y_gz = gz_pose.orientation.y
-        z_gz = gz_pose.orientation.z
-        w_gz = gz_pose.orientation.w
-        vehicle_pose_msg.pose.orientation.x = (- x_gz - y_gz) * sqrt(2)/2
-        vehicle_pose_msg.pose.orientation.y = (- y_gz + x_gz) * sqrt(2)/2
-        vehicle_pose_msg.pose.orientation.z = (- z_gz + w_gz) * sqrt(2)/2
-        vehicle_pose_msg.pose.orientation.w = (- w_gz - z_gz) * sqrt(2)/2
+        vehicle_pose_msg.pose.orientation = gz_pose.orientation
+        # x_gz = gz_pose.orientation.x
+        # y_gz = gz_pose.orientation.y
+        # z_gz = gz_pose.orientation.z
+        # w_gz = gz_pose.orientation.w
+        # vehicle_pose_msg.pose.orientation.x = (- x_gz - y_gz) * sqrt(2)/2
+        # vehicle_pose_msg.pose.orientation.y = (- y_gz + x_gz) * sqrt(2)/2
+        # vehicle_pose_msg.pose.orientation.z = (- z_gz + w_gz) * sqrt(2)/2
+        # vehicle_pose_msg.pose.orientation.w = (- w_gz - z_gz) * sqrt(2)/2
         return vehicle_pose_msg
     
 
@@ -119,21 +119,25 @@ class MocapNode (Node):
         Rotate quaternion: (i)*(xi+yj+zk+w) = -x +yk -zj +wi
         (xi+yj+zk+w)
         """
-        pose_quat = (pose.orientation.x,
+        pose_quat = (pose.orientation.w,
+                pose.orientation.x,
                 pose.orientation.y,
-                pose.orientation.z,
-                pose.orientation.w)
-        rot_quat = (.5, .5, .5, .5)
+                pose.orientation.z)
+        # rot_quat = (sqrt(2)/2, 0., 0., sqrt(2)/2)
+        rot_quat = (0.0, sqrt(2)/2, 0.0, sqrt(2)/2)
+        # offset_90z = (0.0, 0.0, sqrt(2)/2, -sqrt(2)/2)
+        # result = self.quaternion_multiply(pose_quat, rot_quat)
         result = self.quaternion_multiply(pose_quat, rot_quat)
+        # result = self.quaternion_multiply(result_mid, offset_90z)
 
         ned_pose = Pose()
         ned_pose.position.x =  pose.position.x
         ned_pose.position.y = -pose.position.y
         ned_pose.position.z = -pose.position.z
-        ned_pose.orientation.x =  result[0]
-        ned_pose.orientation.y =  result[1]
-        ned_pose.orientation.z =  result[2]
-        ned_pose.orientation.w =  result[3]
+        ned_pose.orientation.x = result[1] # ( pose_quat[3] + pose_quat[0]) * sqrt(2)/2 # 
+        ned_pose.orientation.y = result[2] # ( pose_quat[2] + pose_quat[1]) * sqrt(2)/2 # 
+        ned_pose.orientation.z = result[3] # (-pose_quat[1] + pose_quat[2]) * sqrt(2)/2 # 
+        ned_pose.orientation.w = result[0] # (-pose_quat[0] + pose_quat[3]) * sqrt(2)/2 # 
         return ned_pose
 
     
@@ -142,17 +146,18 @@ class MocapNode (Node):
         Create VehicleOdometry message. Not include velocities
         """
         odom_msg = VehicleOdometry()
-        odom_msg.timestamp =  self.timestamp
-        odom_msg.timestamp_sample = self.timestamp_sample
-        odom_msg.pose_frame = VehicleOdometry.POSE_FRAME_NED
+        odom_msg.timestamp =  int(Clock().now().nanoseconds / 1000)
+        odom_msg.timestamp_sample = int(Clock().now().nanoseconds / 1000)
+        odom_msg.pose_frame = VehicleOdometry.POSE_FRAME_FRD
         ned_pose = self.flu_to_ned_tf(pose)
         odom_msg.position = [ned_pose.position.x, 
                             ned_pose.position.y, 
                             ned_pose.position.z]
-        # odom_msg.q =        [ned_pose.orientation.x, # FIXME: transformation not working
-        #                     ned_pose.orientation.y,                      
-        #                     ned_pose.orientation.z,
-        #                     ned_pose.orientation.w] 
+        # FIXME: transformation not working
+        odom_msg.q =        [ned_pose.orientation.x,
+                            ned_pose.orientation.y,                      
+                            ned_pose.orientation.z,
+                            ned_pose.orientation.w] 
         odom_msg.velocity_frame = VehicleOdometry.VELOCITY_FRAME_UNKNOWN
         odom_msg.velocity =         [float('NaN'), float('Nan'), float('Nan')]
         odom_msg.angular_velocity = [float('NaN'), float('Nan'), float('Nan')]
@@ -181,20 +186,17 @@ class MocapNode (Node):
 
     def attitude_cb(self, msg : VehicleAttitude):
         self.attitude_msg = msg
-        # Store PX4 timestamp
-        self.timestamp = msg.timestamp
-        self.timestamp_sample = msg.timestamp_sample
-
-    def quaternion_multiply(self, quaternion1, quaternion0) -> np.ndarray:
+    
+    def quaternion_multiply(self, quaternion1, quaternion0):
         """
-        Multiply two quaternions in the form (x, y, z, w)
+        Multiply two quaternions in the form (w, x, y, z)
         """
-        x0, y0, z0, w0 = quaternion0
-        x1, y1, z1, w1 = quaternion1
-        return np.array([  x0*w1 + y0*z1 - z0*y1 + w0*x1,
-                         - x0*z1 + y0*w1 + z0*x1 + w0*y1,
-                           x0*y1 - y0*x1 + z0*w1 + w0*z1,
-                         - x0*x1 - y0*y1 - z0*z1 + w0*w1], dtype=np.float64)
+        w0, x0, y0, z0 = quaternion0
+        w1, x1, y1, z1 = quaternion1
+        return np.array([-x1*x0 - y1*y0 - z1*z0 + w1*w0,
+                            x1*w0 + y1*z0 - z1*y0 + w1*x0,
+                            -x1*z0 + y1*w0 + z1*x0 + w1*y0,
+                            x1*y0 - y1*x0 + z1*w0 + w1*z0], dtype=np.float64)
 
 def main(args=None):
     rclpy.init(args=args)
