@@ -1,0 +1,25 @@
+param set COM_CPU_MAX -1
+param set SYS_MC_EST_GROUP 2
+param set COM_ARM_WO_GPS 1
+
+param set EKF2_MULTI_IMU 1
+param set EKF2_IMU_CTRL 1
+param set EKF2_BARO_CTRL 0
+param set EKF2_EV_CTRL 11
+# param set EKF2_EV_DELAY 10
+param set EKF2_HGT_REF 3
+param set EKF2_EV_NOISE_MD 1 
+param set SYS_HAS_GPS 0
+param set GPS_CHECK 240
+param set GPS_CTRL 4
+
+param set PWM_MAIN_TIM0 -3
+param set PWM_MAIN_TIM1 -3
+param set PWM_MAIN_FUNC1 101
+param set PWM_MAIN_FUNC4 102
+param set PWM_MAIN_FUNC2 103
+param set PWM_MAIN_FUNC3 104
+
+microdds_client start -t serial -d /dev/ttyS2 -b 1500000
+
+# param set UXRCE_DDS_DOM_ID 0
