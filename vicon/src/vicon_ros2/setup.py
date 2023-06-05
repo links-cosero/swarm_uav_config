@@ -1,4 +1,6 @@
 from setuptools import setup
+import os
+from glob import glob
 
 package_name = 'vicon_ros2'
 
@@ -10,6 +12,8 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name), glob('launch/*launch.[pxy][yma]*')),
+        (os.path.join('share', package_name), glob('resource/*rviz'))
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -21,7 +25,8 @@ setup(
     entry_points={
         'console_scripts': [
             'vicon_ros2 = vicon_ros2.vicon_ros2:main',
-            'px4_offboard = vicon_ros2.offboard_uav:main'
+            'px4_offboard = vicon_ros2.offboard_uav:main',
+            'visualizer = vicon_ros2.visualizer:main'
         ],
     },
 )

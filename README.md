@@ -4,5 +4,7 @@ This repo uses Px4 v1.14 (main version), MicroXRCE and Gazebo Garden.
 1. [Installation](offboard_ws/README.md) 
 2. [Offboard control example](offboard_ws/src/px4_offboard/README.md)
 3. [Groundtruth Example](gz_groundtruth/README.md)
+4. [ROS 2 cross compilation](ROS2_cross_compile/cross_compilation.md)
+4. [Vicon](vicon/vicon_docs.md)
 
 Credits: Davide Morazzo, Ronald Cristian Dutu

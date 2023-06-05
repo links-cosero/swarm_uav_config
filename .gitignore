@@ -6,3 +6,4 @@ install/
 log/
 
 __pycache__/
+rootfs.tar.gz
