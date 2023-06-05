@@ -5,5 +5,8 @@ build/
 install/
 log/
 
+/*Custom*/
+install_armhf/
+
 __pycache__/
 rootfs.tar.gz

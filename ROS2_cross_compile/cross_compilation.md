@@ -185,6 +185,9 @@ tar -xzf rootfs.tar.gz
 > **ATTENZIONE!** \
 > Copiare i file facendone un archivio ha il lato negativo di poter rompere alcuni symbolic links che sono utilizzati per trovare le librerie durante la compilazione e che devono essere aggiustati manualmente in seguito (vedere [troubleshooting](#troubleshooting)).
 
+# Cross compilation pacchetti
+Vedere la [seguente guida](./packages_cross_compilation.md) per più dettagli.
+
 # Troubleshooting
 
 - **Versione GLIBC non corretta**: usare lo stesso sistema operativo sia per la compilazione che per il target e aggiornare tutti i pacchetti. Verificare le versioni con i comandi `ld --version` `ldd --version`
