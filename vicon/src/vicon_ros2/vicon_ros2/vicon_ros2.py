@@ -52,7 +52,7 @@ class ViconRos2(Node):
                     [float(px)/1000, float(py)/1000, float(pz)/1000],
                     self.get_quaternion_from_mat(rot_matrix),
                     now,
-                    now - latency/1E-9
+                    now - int(latency/1E-6)
                 )
                 # Publish to PX4 vehicle_visual_odometry
                 self.px4_odometry_pub.publish(msg)
@@ -83,9 +83,9 @@ class ViconRos2(Node):
         # Di seguito trasformazione da matrice di rotazione a quaternione non singolare
         # Preso dalle slide del corso di Modelling
         w = sqrt(1 + m[0][0] + m[1][1] + m[2][2]) / 2.0
-        x = np.sign(m[3][2] - m[2][3])*sqrt(1 + m[0][0] - m[1][1] - m[2][2]) / 2.0
-        y = np.sign(m[1][3] - m[3][1])*sqrt(1 - m[0][0] + m[1][1] - m[2][2]) / 2.0
-        z = np.sign(m[2][1] - m[1][2])*sqrt(1 - m[0][0] - m[1][1] + m[2][2]) / 2.0
+        x = np.sign(m[2][1] - m[1][2])*sqrt(1 + m[0][0] - m[1][1] - m[2][2]) / 2.0
+        y = np.sign(m[0][2] - m[2][0])*sqrt(1 - m[0][0] + m[1][1] - m[2][2]) / 2.0
+        z = np.sign(m[1][0] - m[0][1])*sqrt(1 - m[0][0] - m[1][1] + m[2][2]) / 2.0
 
         return [float(w), float(x), float(y), float(z)]
     

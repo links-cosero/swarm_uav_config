@@ -13,6 +13,11 @@ def generate_launch_description():
             name='vicon_node1'
         ),
         Node(
+            package='vicon_ros2',
+            executable='visualizer',
+            name='visualizer'
+        ),
+        Node(
             package='rviz2',
             namespace='',
             executable='rviz2',
