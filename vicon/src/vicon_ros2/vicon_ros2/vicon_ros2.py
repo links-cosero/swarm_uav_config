@@ -1,6 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from math import cos, sin, sqrt
+import numpy as np
 
 from pyvicon_datastream import tools
 import pyvicon_datastream as pv
@@ -74,10 +75,17 @@ class ViconRos2(Node):
 
     def get_quaternion_from_mat(self, m):
         """Extract quaternion from a rotation matrix"""
+        # w = sqrt(1 + m[0][0] + m[1][1] + m[2][2]) / 2.0
+        # x = (m[2][1] - m[1][2]) / (4*w)
+        # y = (m[0][2] - m[2][0]) / (4*w)
+        # z = (m[1][0] - m[0][1]) / (4*w)
+
+        # Di seguito trasformazione da matrice di rotazione a quaternione non singolare
+        # Preso dalle slide del corso di Modelling
         w = sqrt(1 + m[0][0] + m[1][1] + m[2][2]) / 2.0
-        x = (m[2][1] - m[1][2]) / (4*w)
-        y = (m[0][2] - m[2][0]) / (4*w)
-        z = (m[1][0] - m[0][1]) / (4*w)
+        x = np.sign(m[3][2] - m[2][3])*sqrt(1 + m[0][0] - m[1][1] - m[2][2]) / 2.0
+        y = np.sign(m[1][3] - m[3][1])*sqrt(1 - m[0][0] + m[1][1] - m[2][2]) / 2.0
+        z = np.sign(m[2][1] - m[1][2])*sqrt(1 - m[0][0] - m[1][1] + m[2][2]) / 2.0
 
         return [float(w), float(x), float(y), float(z)]
     

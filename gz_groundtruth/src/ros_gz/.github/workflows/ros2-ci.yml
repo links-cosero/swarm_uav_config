@@ -1,0 +1,35 @@
+name: ROS2 CI
+
+on: [push, pull_request]
+
+jobs:
+  ros_gz_ci:
+    name: ros_gz CI
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - docker-image: "ubuntu:22.04"
+            gz-version: "garden"
+            ros-distro: "humble"
+          - docker-image: "ubuntu:22.04"
+            gz-version: "garden"
+            ros-distro: "rolling"
+    container:
+      image: ${{ matrix.docker-image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build and Test
+        run: .github/workflows/build-and-test.sh
+        env:
+          DOCKER_IMAGE: ${{ matrix.docker-image }}
+          GZ_VERSION: ${{ matrix.gz-version  }}
+          ROS_DISTRO: ${{ matrix.ros-distro }}
+      - name: Build sdformat_urdf from source
+        uses: actions/checkout@v2
+        if: ${{ matrix.gz-version  }} == "garden"
+        with:
+          repository: ros/sdformat_urdf
+          ref: ros2
