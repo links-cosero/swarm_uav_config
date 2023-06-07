@@ -10,20 +10,24 @@ import pyvicon_datastream as pv
 from px4_msgs.msg import VehicleOdometry
 from geometry_msgs.msg import PoseStamped
 
+import time
+
 class ViconRos2(Node):
 
     def __init__(self):
         super().__init__('ViconRos2')
         self.vicon_tracker_ip = "192.168.50.56"
+        self.vicon_position = None
         self.declare_parameter("object_name", "drone1")
         self.object_name = self.get_parameter("object_name").get_parameter_value().string_value
         # VICON client setup
         self.vicon_tracker = tools.ObjectTracker(self.vicon_tracker_ip)
-        self.vicon_tracker.vicon_client.set_stream_mode(pv.StreamMode.ClientPull)
+        self.vicon_tracker.vicon_client.set_stream_mode(pv.StreamMode.ClientPullPreFetch)
         self.vicon_tracker.vicon_client.set_axis_mapping(
 				pv.Direction.Forward,
 				pv.Direction.Right,
 				pv.Direction.Down)
+        
         
 
         # -------- PUBLISHER --------- #
@@ -31,20 +35,27 @@ class ViconRos2(Node):
         self.vicon_pose_pub =     self.create_publisher(PoseStamped, "px4_visualizer/" + self.object_name+"_vicon_pose", 10)
 
         # -------- TIMERS ------------ #
-        data_timer = self.create_timer(1/40.0, self.data_timer_cb)
+        data_timer = self.create_timer(1/50.0, self.data_timer_cb)
+        vicon_timer = self.create_timer(1/50.0, self.vicon_timer_cb)
 
+    def vicon_timer_cb(self):
+        # Read position from VICON
+        start = time.time()
+        self.vicon_position = self.vicon_tracker.get_position(self.object_name)
+        stop = time.time()
+        # self.get_logger().info(f"{stop - start}")
 
     def data_timer_cb(self):
         """Get frame from VICON and publish odometry to PX4"""
-        position = self.vicon_tracker.get_position(self.object_name)
-        if not position:
+        if not self.vicon_position:
             return
         
-        latency, frame_num, object_pos = position
+        latency, frame_num, object_pos = self.vicon_position
 
         for item in object_pos: # THis list can be empty if object is not in VICON range
             subject_name, segment_name, px, py, pz, rx, ry, rz = tuple(item)
             if subject_name == self.object_name:
+                start = time.time()
                 rot_matrix = self.create_rot_matrix(rx, ry, rz)
 
                 now = int(self.get_clock().now().nanoseconds / 1000)
@@ -63,7 +74,11 @@ class ViconRos2(Node):
                     pz, 
                     self.get_quaternion_from_mat(rot_matrix))
                 self.vicon_pose_pub.publish(vicon_stamped)
+                stop = time.time()
+                # if float(stop - start) > 0.05:
+                self.get_logger().info(f"{stop - start}; latency {latency}")
                 return
+            
         
     def create_rot_matrix(self, x : float, y : float, z : float):
         """Create rotation matrix as described in VICON manual"""
