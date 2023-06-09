@@ -9,9 +9,11 @@
 #include "geometry_msgs/msg/quaternion.hpp"
 
 #include "px4_msgs/msg/vehicle_odometry.hpp"
+#include "px4_msgs/msg/timesync_status.hpp"
 
 using namespace std::chrono_literals;
 using namespace ViconDataStreamSDK::CPP;
+using std::placeholders::_1;
 
 struct segment_info{
   std::string object_name;
@@ -43,11 +45,15 @@ class ViconRos2 : public rclcpp::Node
       /*ViconSDK client init*/
       this->vicon_client.Connect(this->vicon_tracker_ip);
       this->vicon_client.EnableSegmentData();
-      this->vicon_client.SetStreamMode(StreamMode::ClientPullPreFetch);
+      this->vicon_client.SetStreamMode(StreamMode::ClientPull);
       this->vicon_client.SetAxisMapping(
         Direction::Forward,
         Direction::Right,
         Direction::Down);
+
+      /*--- SUBSCRIPTIONS ---*/
+      this->create_subscription<px4_msgs::msg::TimesyncStatus>("/fmu/out/timesync_status", 10, 
+        std::bind(&ViconRos2::timesync_cb, this, _1));
 
       /*--- PUBLISHERS ---- */
       this->vicon_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/vicon/pose", 10);
@@ -58,6 +64,10 @@ class ViconRos2 : public rclcpp::Node
     }
 
   private:
+    void timesync_cb(const px4_msgs::msg::TimesyncStatus & msg){
+      this->px4_timestamp = msg.timestamp;
+    }
+
     void timer_callback()
     {
       geometry_msgs::msg::PoseStamped new_pose;
@@ -88,8 +98,8 @@ class ViconRos2 : public rclcpp::Node
 
     px4_msgs::msg::VehicleOdometry create_odom_msg(geometry_msgs::msg::PoseStamped pose, float latency){
       px4_msgs::msg::VehicleOdometry new_msg;
-      new_msg.timestamp = this->get_timestamp();
-      new_msg.timestamp_sample = new_msg.timestamp;
+      new_msg.timestamp = this->px4_timestamp; //this->get_timestamp();
+      new_msg.timestamp_sample = this->px4_timestamp;
       new_msg.pose_frame = px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD;
       new_msg.position = {
         float(pose.pose.position.x),
@@ -138,7 +148,7 @@ class ViconRos2 : public rclcpp::Node
             Output_GetSegmentName seg_name = this-> vicon_client.GetSegmentName(obj_name, j);
             Output_GetSegmentGlobalTranslation seg_trasl = this->vicon_client.GetSegmentGlobalTranslation(obj_name, seg_name.SegmentName);
             Output_GetSegmentLocalRotationQuaternion seg_quat = this-> vicon_client.GetSegmentLocalRotationQuaternion(obj_name, seg_name.SegmentName);
-            
+
             if(!seg_trasl.Occluded){
               segment_info new_seg;
               new_seg.object_name = obj_name;
@@ -171,6 +181,7 @@ class ViconRos2 : public rclcpp::Node
     std::string vicon_tracker_ip = "192.168.50.56";
     ViconDataStreamSDK::CPP::Client vicon_client;
     rclcpp::Time start_time;
+    int px4_timestamp = 0;
 };
 
 int main(int argc, char * argv[])
