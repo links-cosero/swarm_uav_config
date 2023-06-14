@@ -1,0 +1,696 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<ParamStore>
+
+  <ParamDefinitionList name="ActiveObjects">
+    <ParamListGroup name="ActiveObjects">
+      <ParamList name="ActiveObjects">
+        <Param name="ActiveObjects" value="drone1"/>
+      </ParamList>
+    </ParamListGroup>
+  </ParamDefinitionList>
+
+  <ParamDefinitionList name="Capture">
+    <ParamListGroup name="">
+      <ParamList name="default">
+        <Param name="BufferRangeInSeconds" value="1166.51"/>
+        <Param name="BufferLatencyInSeconds" value="0.01"/>
+        <Param name="MeasuredFrameRate" value="0"/>
+        <Param name="FramesCaptured" value="26045"/>
+        <Param name="FramesDropped" value="0"/>
+        <Param name="ErrorString" value=""/>
+        <Param name="ArmedStatus" value="true"/>
+        <Param name="TimeCapturedString" value=""/>
+        <Param name="LowDiskSpace"/>
+      </ParamList>
+    </ParamListGroup>
+  </ParamDefinitionList>
+
+  <ParamDefinitionList name="DeviceWhiteList">
+    <ParamListGroup name="">
+      <ParamList name="default">
+        <Param name="DeviceMap" value="[]"/>
+      </ParamList>
+    </ParamListGroup>
+  </ParamDefinitionList>
+
+  <ParamDefinitionList name="FlowParameters">
+    <ParamListGroup name="">
+      <ParamList name="GraphParams">
+        <Param name="General.FirstProcessingStage" value="1"/>
+        <Param name="General.OutputLevel" value="5"/>
+        <Param name="General.CalibrationLevel" value="0"/>
+        <Param name="General.NumberOfSubjects" value="1"/>
+        <Param name="General.FillGaps" value="false"/>
+        <Param name="General.ForwardPass" value="true"/>
+        <Param name="LowJitterMode" value="false"/>
+        <Param name="Tracker.TrackMode" value="true"/>
+        <Param name="Input.FilterParameters" value="true"/>
+        <Param name="Input.EnableClock" value="false"/>
+        <Param name="Input.HaveViconSystem" value="false"/>
+        <Param name="Input.ClockFrequency" value="120"/>
+        <Param name="Input.ClockUseTimestamp" value="true"/>
+        <Param name="Input.Filename" value=""/>
+        <Param name="Input.Loop" value="false"/>
+        <Param name="Input.StartFrame" value="0"/>
+        <Param name="Input.EndFrame" value="4294967295"/>
+        <Param name="Input.RemoteAddress" value=""/>
+        <Param name="Input.BlockingStream" value="false"/>
+        <Param name="Input.XCPFilename" value=""/>
+        <Param name="Input.VSKFilenames" value=""/>
+        <Param name="Input.VSSFilenames" value=""/>
+        <Param name="Input.VSTFilenames" value=""/>
+        <Param name="Input.VSSCreateCalibrationTemplates" value="false"/>
+        <Param name="Input.VRAFolder" value=""/>
+        <Param name="Input.VideoInputDeviceURNS" value=""/>
+        <Param name="Input.DigitalDeviceURNS" value=""/>
+        <Param name="Input.DataTransferThreads" value="0"/>
+        <Param name="Input.X2DDeriveTickFromTimecode" value="false"/>
+        <Param name="Input.X2DIncludeUserIds" value="false"/>
+        <Param name="Input.X2DAddHardware" value="true"/>
+        <Param name="Input.HashNames" value="true"/>
+        <Param name="Input.CreateDefaultJointRanges" value="false"/>
+        <Param name="Input.TypeBlackList" value=""/>
+        <Param name="Input.TypeWhiteList" value=""/>
+        <Param name="Input.CameraBlackList" value=""/>
+        <Param name="Input.CameraWhiteList" value=""/>
+        <Param name="Input.ZeroFlowStoreOffset" value="false"/>
+        <Param name="Input.SubjectSettingsFilename" value=""/>
+        <Param name="Input.MCPStaticItemsFilename" value=""/>
+        <Param name="Input.VideoFilenames" value=""/>
+        <Param name="GlobalItems.Enabled" value="true"/>
+        <Param name="GlobalItems.TypeBlackList" value=""/>
+        <Param name="GlobalItems.TypeWhiteList" value=""/>
+        <Param name="PostGlobalItems.MCPFilename" value=""/>
+        <Param name="VideoCentroids.Enabled" value="false"/>
+        <Param name="CircleFitter.ThreadCount" value="0"/>
+        <Param name="CircleFitter.Enabled" value="true"/>
+        <Param name="CentroidSystem.RefitAlreadyFittedBlobs" value="false"/>
+        <Param name="CircleFitterType" value="FastSplit"/>
+        <Param name="CircularityTweak" value="0"/>
+        <Param name="UseNonGreedyBlobSplitting" value="false"/>
+        <Param name="GreedyScoreThreshold" value="0.65000000000000002"/>
+        <Param name="VideoCentroids.PreferCameraSpecificSettings" value="true"/>
+        <Param name="VideoCentroids.FastFitCircularityThreshold" value="0.29999999999999999"/>
+        <Param name="MinimumFastSplitWholeBlobRadius" value="1.5"/>
+        <Param name="FastSplitPixelBudget" value="1000"/>
+        <Param name="OverrideCircularityThresholdSplit" value="0.44"/>
+        <Param name="CentroidSystem.AllowSinglePixelCentroids" value="false"/>
+        <Param name="VideoCentroids.SplitVideoFitters" value="true"/>
+        <Param name="VideoCentroids.SubsampleFactor" value="2"/>
+        <Param name="CentroidWeightSystem.ScoringMethod" value="0"/>
+        <Param name="CentroidWeightSystem.SizeWeight" value="0"/>
+        <Param name="CentroidWeightSystem.LowerRadius" value="1"/>
+        <Param name="CentroidWeightSystem.UpperRadius" value="3"/>
+        <Param name="CentroidWeightSystem.LowSizeScore" value="0.10000000000000001"/>
+        <Param name="CentroidWeightSystem.BrightnessWeight" value="1"/>
+        <Param name="CentroidWeightSystem.GreyLevelsToSaturate" value="40"/>
+        <Param name="CentroidWeightSystem.CircularityWeight" value="1"/>
+        <Param name="CentroidWeightSystem.LowerCircularityThreshold" value="0.25"/>
+        <Param name="CentroidWeightSystem.UpperCircularityThreshold" value="0.55000000000000004"/>
+        <Param name="CentroidWeightSystem.RegressionRadiusNoise" value="1.5"/>
+        <Param name="CentroidWeightSystem.RegressionPixelSD" value="2"/>
+        <Param name="CentroidWeightSystem.RemoveZeroCentroids" value="true"/>
+        <Param name="ObjectTracker.LowLatency" value="false"/>
+        <Param name="MinCams" value="2"/>
+        <Param name="ObjectTracker.ThreadCount" value="0"/>
+        <Param name="ObjectTracker.OfflineBootThrottleKeepN" value="3"/>
+        <Param name="ObjectTracker.BootInteractionDevice" value="false"/>
+        <Param name="ObjectTracker.EnableRobustKernel" value="false"/>
+        <Param name="ObjectTracker.EnableSequentialWeightingConsistencyCheck" value="false"/>
+        <Param name="ObjectTracker.CheckInputOutput" value="false"/>
+        <Param name="ObjectTracker.SystemWideFilterMode" value="1"/>
+        <Param name="SlowPathLatencyInfo" value="false"/>
+        <Param name="ObjectTracker.EnableOcclusionWeighting" value="false"/>
+        <Param name="ObjectTracker.ReprojectionThreshold" value="1.5"/>
+        <Param name="ObjectTracker.MatcherLowerMatchLimit" value="5"/>
+        <Param name="ObjectTracker.MatcherUpperMatchLimit" value="10"/>
+        <Param name="ObjectTracker.MatcherAlwaysSort" value="false"/>
+        <Param name="ConvertToObject" value="true"/>
+        <Param name="ObjectTracker.MaxBootIterations" value="1"/>
+        <Param name="ObjectTracker.EntranceThreshold" value="0"/>
+        <Param name="ObjectTracker.MinimumObjectMarkerSeparation" value="10"/>
+        <Param name="Reconstructor.ThreadCount" value="0"/>
+        <Param name="Reconstructor.3DPredictions" value="false"/>
+        <Param name="EnvironmentalDriftTolerance" value="1.5"/>
+        <Param name="MinCamsWithPrediction" value="2"/>
+        <Param name="MinSeparation" value="14"/>
+        <Param name="MinCentroidRadius" value="0"/>
+        <Param name="MaxCentroidRadius" value="50"/>
+        <Param name="MinReconRadius" value="0"/>
+        <Param name="MaxReconRadius" value="1000"/>
+        <Param name="PredictionMatchScoreFactor" value="2"/>
+        <Param name="MinReconX" value="-100000"/>
+        <Param name="MinReconY" value="-100000"/>
+        <Param name="MinReconZ" value="-100000"/>
+        <Param name="MaxReconX" value="100000"/>
+        <Param name="MaxReconY" value="100000"/>
+        <Param name="MaxReconZ" value="100000"/>
+        <Param name="MatcherLowerMatchLimit" value="0"/>
+        <Param name="MatcherUpperMatchLimit" value="0"/>
+        <Param name="MatcherAlwaysSort" value="false"/>
+        <Param name="StartupError" value="150"/>
+        <Param name="PredictionError" value="150"/>
+        <Param name="CalculateMetrics" value="false"/>
+        <Param name="MetricsFilename" value=""/>
+        <Param name="Reconstructor.IncrementalReconstructLabelledCentroids" value="false"/>
+        <Param name="PostFilter.EnableOneEuro" value="false"/>
+        <Param name="BiasDumpingFactor" value="0.001"/>
+        <Param name="BiasVariance" value="0.001"/>
+        <Param name="TranslationMinCutOff" value="1"/>
+        <Param name="TranslationDCutOff" value="1"/>
+        <Param name="TranslationBeta" value="0.5"/>
+        <Param name="RotationMinCutOff" value="1"/>
+        <Param name="RotationDCutOff" value="1"/>
+        <Param name="RotationBeta" value="0.5"/>
+        <Param name="ApplyGlobalFilter" value="false"/>
+        <Param name="CameraHealing.Enable" value="false"/>
+        <Param name="CameraAutoHeal.Enabled" value="false"/>
+        <Param name="CameraAutoHeal.XCPFilename" value=""/>
+        <Param name="CameraAutoHeal.AutoHealMCPFilename" value=""/>
+        <Param name="CameraAutoHeal.AutoStartInGUIMode" value="false"/>
+        <Param name="CameraAutoHealBump.MinimumFrameCount" value="250"/>
+        <Param name="CameraAutoHealBump.ForceEnabledWithPassiveSystem" value="false"/>
+        <Param name="CameraAccelerometry.Enabled" value="false"/>
+        <Param name="GreyscaleCollector.Enabled" value="false"/>
+        <Param name="SystemHealth.Enable" value="false"/>
+        <Param name="SystemHealthReport.Enabled" value="false"/>
+        <Param name="CalibrationReport.Filename" value=""/>
+        <Param name="PerformanceMonitor.Enabled" value="false"/>
+        <Param name="SystemHealth.UseLabelledCentroidsOnly" value="false"/>
+        <Param name="SystemHealth.WindowSizeInSecondsCalibrationHealth" value="20"/>
+        <Param name="SystemHealth.StateThrottle" value="1"/>
+        <Param name="CameraTrackFromCluster.Enabled" value="false"/>
+        <Param name="CameraTrackFromCluster.CamerasToTrack" value=""/>
+        <Param name="CameraTrackFromCluster.SubjectsToTrack" value=""/>
+        <Param name="Reconstructor.MaxTrajLengthToDelete" value="0"/>
+        <Param name="Output.SubjectWorldPoseGenerator" value="false"/>
+        <Param name="Output.CentroidResidualSetGenerator" value="false"/>
+        <Param name="Output.StateCacheName" value="DataStore"/>
+        <Param name="Output.StateCache" value="0"/>
+        <Param name="Output.StateCacheMB" value="0"/>
+        <Param name="Output.StateCacheSeconds" value="0"/>
+        <Param name="Output.StreamServer" value="false"/>
+        <Param name="Output.ServerThreadCount" value="1"/>
+        <Param name="Output.ServerPort" value="44603"/>
+        <Param name="Output.BlockWhenDisconnected" value="false"/>
+        <Param name="Output.C3DFilename" value=""/>
+        <Param name="Output.C3DTrajectoryPackingEnabled" value="true"/>
+        <Param name="Output.FSSFilename" value=""/>
+        <Param name="Output.X2DFilename" value=""/>
+        <Param name="Output.X2DWriteBehaviour" value="0"/>
+        <Param name="Output.StateCacheExcluding2D" value="0"/>
+        <Param name="Output.StateCacheExcludingVideo" value="0"/>
+        <Param name="Ouput.AddEventInserter" value="false"/>
+        <Param name="Output.TypeBlackList" value=""/>
+        <Param name="Output.TypeWhiteList" value=""/>
+        <Param name="Output.CameraBlackList" value=""/>
+        <Param name="Output.CameraWhiteList" value=""/>
+        <Param name="Output.EnableConsistencyChecker" value="false"/>
+        <Param name="Output.MCPTypeBlackList" value=""/>
+        <Param name="Output.MCPTypeWhiteList" value=""/>
+        <Param name="Output.CGStreamServerEnabled" value="false"/>
+        <Param name="Output.CGStreamServerPort" value="8002"/>
+        <Param name="Output.CGStreamServerSubjectTypeToStream" value="0"/>
+        <Param name="Output.CGStreamServerDataTypeToStream" value="0"/>
+        <Param name="General.CacheProgress" value="false"/>
+        <Param name="DebugStateCachePattern" value=""/>
+        <Param name="DebugStateCacheCapacity" value="1000"/>
+        <Param name="DebugFileWriterPattern" value=""/>
+        <Param name="DebugFileWriterStem" value=""/>
+        <Param name="DebugConsistencyCheckerPattern" value=""/>
+        <Param name="FitReconVolToTarget" value="false"/>
+      </ParamList>
+    </ParamListGroup>
+  </ParamDefinitionList>
+
+  <ParamDefinitionList name="MXCamera">
+    <ParamListGroup name="">
+      <ParamList name="2141181">
+        <Param name="Name" value=""/>
+        <Param name="Id" value="2141181"/>
+        <Param name="UserId" value="1"/>
+        <Param name="Enabled" value="true"/>
+        <Param name="EnableStrobe" value="true"/>
+        <Param name="Strobe" value="1"/>
+        <Param name="SensorMode" value="normal"/>
+        <Param name="Threshold" value="0.20000000000000001"/>
+        <Param name="Gain" value="1"/>
+        <Param name="Greyscale" value="0"/>
+        <Param name="EnableDSP" value="true"/>
+        <Param name="EnableWindowedFrameRates" value="true"/>
+        <Param name="CentroidTrackingEnable" value="false"/>
+        <Param name="CentroidTrackingMarkerVelocity" value="5"/>
+        <Param name="Connected" value="true"/>
+        <Param name="SyncMaster" value="false"/>
+        <Param name="Warning" value=""/>
+        <Param name="ContributingCentroids" value="true"/>
+        <Param name="ContributingGreyscale" value="true"/>
+        <Param name="ContributingTracks" value="false"/>
+        <Param name="Type" value="VeroV22"/>
+        <Param name="DisplayType" value="Vero v2.2"/>
+        <Param name="StrobeType" value="IR"/>
+        <Param name="StrobeTemperature" value="0"/>
+        <Param name="CameraPoETemperature" value="63"/>
+        <Param name="CameraDSPTemperature" value="63"/>
+        <Param name="CameraSensorTemperature" value="0"/>
+        <Param name="SensorWidth" value="2048"/>
+        <Param name="SensorHeight" value="1088"/>
+        <Param name="SensorWindowLeft" value="0"/>
+        <Param name="SensorWindowRight" value="2047"/>
+        <Param name="SensorWindowTop" value="0"/>
+        <Param name="SensorWindowBottom" value="1087"/>
+        <Param name="Revision" value="1"/>
+        <Param name="MACAddress" value="00:00:37:20:ab:fd"/>
+        <Param name="SerialNumber" value="VE22-S-11291"/>
+        <Param name="HeadSerialNumber" value=""/>
+        <Param name="IPAddress" value="192.168.10.15"/>
+        <Param name="StreamDestinationAddress" value="Default"/>
+        <Param name="StreamDestinationAddressWarning" value=""/>
+        <Param name="FirmwareVersion" value="725"/>
+        <Param name="FirmwareComplete" value="true"/>
+        <Param name="BackFocus" value="false"/>
+        <Param name="MinRatio" value="0.5"/>
+        <Param name="MaxPixelsPerLineToCircleFit" value="50"/>
+        <Param name="VideoCalibrationReady" value="false"/>
+        <Param name="VideoNotCalibrationReady" value="false"/>
+        <Param name="ThresholdTableMode" value="2"/>
+        <Param name="EnableLEDs" value="true"/>
+        <Param name="EnableDisplays" value="true"/>
+        <Param name="EnableTap" value="false"/>
+        <Param name="EnableAccel" value="true"/>
+        <Param name="ResetCalibration" value="false"/>
+        <Param name="FocalLength" value="0.0070147710185072838"/>
+        <Param name="RadialParam1" value="0.45506332167505115"/>
+        <Param name="RadialParam2" value="0.12647876394819615"/>
+        <Param name="Reboot" value="false"/>
+        <Param name="Bumped" value="false"/>
+        <Param name="BumpTolerance" value="0.0900000036"/>
+        <Param name="Orientation" value="Down"/>
+      </ParamList>
+      <ParamList name="2143631">
+        <Param name="Name" value=""/>
+        <Param name="Id" value="2143631"/>
+        <Param name="UserId" value="3"/>
+        <Param name="Enabled" value="true"/>
+        <Param name="EnableStrobe" value="true"/>
+        <Param name="Strobe" value="1"/>
+        <Param name="SensorMode" value="normal"/>
+        <Param name="Threshold" value="0.20000000000000001"/>
+        <Param name="Gain" value="1"/>
+        <Param name="Greyscale" value="0"/>
+        <Param name="EnableDSP" value="true"/>
+        <Param name="EnableWindowedFrameRates" value="true"/>
+        <Param name="CentroidTrackingEnable" value="false"/>
+        <Param name="CentroidTrackingMarkerVelocity" value="5"/>
+        <Param name="Connected" value="true"/>
+        <Param name="SyncMaster" value="false"/>
+        <Param name="Warning" value=""/>
+        <Param name="ContributingCentroids" value="true"/>
+        <Param name="ContributingGreyscale" value="true"/>
+        <Param name="ContributingTracks" value="false"/>
+        <Param name="Type" value="VeroV22"/>
+        <Param name="DisplayType" value="Vero v2.2"/>
+        <Param name="StrobeType" value="IR"/>
+        <Param name="StrobeTemperature" value="0"/>
+        <Param name="CameraPoETemperature" value="63"/>
+        <Param name="CameraDSPTemperature" value="63"/>
+        <Param name="CameraSensorTemperature" value="0"/>
+        <Param name="SensorWidth" value="2048"/>
+        <Param name="SensorHeight" value="1088"/>
+        <Param name="SensorWindowLeft" value="0"/>
+        <Param name="SensorWindowRight" value="2047"/>
+        <Param name="SensorWindowTop" value="0"/>
+        <Param name="SensorWindowBottom" value="1087"/>
+        <Param name="Revision" value="1"/>
+        <Param name="MACAddress" value="00:00:37:20:b5:8f"/>
+        <Param name="SerialNumber" value="VE22-S-12199"/>
+        <Param name="HeadSerialNumber" value=""/>
+        <Param name="IPAddress" value="192.168.10.13"/>
+        <Param name="StreamDestinationAddress" value="Default"/>
+        <Param name="StreamDestinationAddressWarning" value=""/>
+        <Param name="FirmwareVersion" value="725"/>
+        <Param name="FirmwareComplete" value="true"/>
+        <Param name="BackFocus" value="false"/>
+        <Param name="MinRatio" value="0.5"/>
+        <Param name="MaxPixelsPerLineToCircleFit" value="50"/>
+        <Param name="VideoCalibrationReady" value="false"/>
+        <Param name="VideoNotCalibrationReady" value="false"/>
+        <Param name="ThresholdTableMode" value="2"/>
+        <Param name="EnableLEDs" value="true"/>
+        <Param name="EnableDisplays" value="true"/>
+        <Param name="EnableTap" value="false"/>
+        <Param name="EnableAccel" value="true"/>
+        <Param name="ResetCalibration" value="false"/>
+        <Param name="FocalLength" value="0.0070750819763837954"/>
+        <Param name="RadialParam1" value="0.43822615632203954"/>
+        <Param name="RadialParam2" value="0.19655551690620404"/>
+        <Param name="Reboot" value="false"/>
+        <Param name="Bumped" value="false"/>
+        <Param name="BumpTolerance" value="0.0900000036"/>
+        <Param name="Orientation" value="Down"/>
+      </ParamList>
+      <ParamList name="2143633">
+        <Param name="Name" value=""/>
+        <Param name="Id" value="2143633"/>
+        <Param name="UserId" value="4"/>
+        <Param name="Enabled" value="true"/>
+        <Param name="EnableStrobe" value="true"/>
+        <Param name="Strobe" value="1"/>
+        <Param name="SensorMode" value="normal"/>
+        <Param name="Threshold" value="0.20000000000000001"/>
+        <Param name="Gain" value="1"/>
+        <Param name="Greyscale" value="0"/>
+        <Param name="EnableDSP" value="true"/>
+        <Param name="EnableWindowedFrameRates" value="true"/>
+        <Param name="CentroidTrackingEnable" value="false"/>
+        <Param name="CentroidTrackingMarkerVelocity" value="5"/>
+        <Param name="Connected" value="true"/>
+        <Param name="SyncMaster" value="false"/>
+        <Param name="Warning" value=""/>
+        <Param name="ContributingCentroids" value="true"/>
+        <Param name="ContributingGreyscale" value="true"/>
+        <Param name="ContributingTracks" value="false"/>
+        <Param name="Type" value="VeroV22"/>
+        <Param name="DisplayType" value="Vero v2.2"/>
+        <Param name="StrobeType" value="IR"/>
+        <Param name="StrobeTemperature" value="0"/>
+        <Param name="CameraPoETemperature" value="60"/>
+        <Param name="CameraDSPTemperature" value="60"/>
+        <Param name="CameraSensorTemperature" value="0"/>
+        <Param name="SensorWidth" value="2048"/>
+        <Param name="SensorHeight" value="1088"/>
+        <Param name="SensorWindowLeft" value="0"/>
+        <Param name="SensorWindowRight" value="2047"/>
+        <Param name="SensorWindowTop" value="0"/>
+        <Param name="SensorWindowBottom" value="1087"/>
+        <Param name="Revision" value="1"/>
+        <Param name="MACAddress" value="00:00:37:20:b5:91"/>
+        <Param name="SerialNumber" value="VE22-S-12193"/>
+        <Param name="HeadSerialNumber" value=""/>
+        <Param name="IPAddress" value="192.168.10.14"/>
+        <Param name="StreamDestinationAddress" value="Default"/>
+        <Param name="StreamDestinationAddressWarning" value=""/>
+        <Param name="FirmwareVersion" value="725"/>
+        <Param name="FirmwareComplete" value="true"/>
+        <Param name="BackFocus" value="false"/>
+        <Param name="MinRatio" value="0.5"/>
+        <Param name="MaxPixelsPerLineToCircleFit" value="50"/>
+        <Param name="VideoCalibrationReady" value="false"/>
+        <Param name="VideoNotCalibrationReady" value="false"/>
+        <Param name="ThresholdTableMode" value="2"/>
+        <Param name="EnableLEDs" value="true"/>
+        <Param name="EnableDisplays" value="true"/>
+        <Param name="EnableTap" value="false"/>
+        <Param name="EnableAccel" value="true"/>
+        <Param name="ResetCalibration" value="false"/>
+        <Param name="FocalLength" value="0.0070063584005340207"/>
+        <Param name="RadialParam1" value="0.46115940335643302"/>
+        <Param name="RadialParam2" value="0.10958155375779929"/>
+        <Param name="Reboot" value="false"/>
+        <Param name="Bumped" value="false"/>
+        <Param name="BumpTolerance" value="0.0900000036"/>
+        <Param name="Orientation" value="Down"/>
+      </ParamList>
+      <ParamList name="2143736">
+        <Param name="Name" value=""/>
+        <Param name="Id" value="2143736"/>
+        <Param name="UserId" value="2"/>
+        <Param name="Enabled" value="true"/>
+        <Param name="EnableStrobe" value="true"/>
+        <Param name="Strobe" value="1"/>
+        <Param name="SensorMode" value="normal"/>
+        <Param name="Threshold" value="0.20000000000000001"/>
+        <Param name="Gain" value="1"/>
+        <Param name="Greyscale" value="0"/>
+        <Param name="EnableDSP" value="true"/>
+        <Param name="EnableWindowedFrameRates" value="true"/>
+        <Param name="CentroidTrackingEnable" value="false"/>
+        <Param name="CentroidTrackingMarkerVelocity" value="5"/>
+        <Param name="Connected" value="true"/>
+        <Param name="SyncMaster" value="true"/>
+        <Param name="Warning" value=""/>
+        <Param name="ContributingCentroids" value="true"/>
+        <Param name="ContributingGreyscale" value="true"/>
+        <Param name="ContributingTracks" value="false"/>
+        <Param name="Type" value="VeroV22"/>
+        <Param name="DisplayType" value="Vero v2.2"/>
+        <Param name="StrobeType" value="IR"/>
+        <Param name="StrobeTemperature" value="0"/>
+        <Param name="CameraPoETemperature" value="63"/>
+        <Param name="CameraDSPTemperature" value="63"/>
+        <Param name="CameraSensorTemperature" value="0"/>
+        <Param name="SensorWidth" value="2048"/>
+        <Param name="SensorHeight" value="1088"/>
+        <Param name="SensorWindowLeft" value="0"/>
+        <Param name="SensorWindowRight" value="2047"/>
+        <Param name="SensorWindowTop" value="0"/>
+        <Param name="SensorWindowBottom" value="1087"/>
+        <Param name="Revision" value="1"/>
+        <Param name="MACAddress" value="00:00:37:20:b5:f8"/>
+        <Param name="SerialNumber" value="VE22-S-12195"/>
+        <Param name="HeadSerialNumber" value=""/>
+        <Param name="IPAddress" value="192.168.10.10"/>
+        <Param name="StreamDestinationAddress" value="Default"/>
+        <Param name="StreamDestinationAddressWarning" value=""/>
+        <Param name="FirmwareVersion" value="725"/>
+        <Param name="FirmwareComplete" value="true"/>
+        <Param name="BackFocus" value="false"/>
+        <Param name="MinRatio" value="0.5"/>
+        <Param name="MaxPixelsPerLineToCircleFit" value="50"/>
+        <Param name="VideoCalibrationReady" value="false"/>
+        <Param name="VideoNotCalibrationReady" value="false"/>
+        <Param name="ThresholdTableMode" value="2"/>
+        <Param name="EnableLEDs" value="true"/>
+        <Param name="EnableDisplays" value="true"/>
+        <Param name="EnableTap" value="false"/>
+        <Param name="EnableAccel" value="true"/>
+        <Param name="ResetCalibration" value="false"/>
+        <Param name="FocalLength" value="0.0070928721493334103"/>
+        <Param name="RadialParam1" value="0.44423946300367007"/>
+        <Param name="RadialParam2" value="0.1963217882025238"/>
+        <Param name="Reboot" value="false"/>
+        <Param name="Bumped" value="false"/>
+        <Param name="BumpTolerance" value="0.0900000036"/>
+        <Param name="Orientation" value="Down"/>
+      </ParamList>
+      <ParamList name="2143741">
+        <Param name="Name" value=""/>
+        <Param name="Id" value="2143741"/>
+        <Param name="UserId" value="5"/>
+        <Param name="Enabled" value="true"/>
+        <Param name="EnableStrobe" value="true"/>
+        <Param name="Strobe" value="1"/>
+        <Param name="SensorMode" value="normal"/>
+        <Param name="Threshold" value="0.20000000000000001"/>
+        <Param name="Gain" value="1"/>
+        <Param name="Greyscale" value="0"/>
+        <Param name="EnableDSP" value="true"/>
+        <Param name="EnableWindowedFrameRates" value="true"/>
+        <Param name="CentroidTrackingEnable" value="false"/>
+        <Param name="CentroidTrackingMarkerVelocity" value="5"/>
+        <Param name="Connected" value="true"/>
+        <Param name="SyncMaster" value="false"/>
+        <Param name="Warning" value=""/>
+        <Param name="ContributingCentroids" value="true"/>
+        <Param name="ContributingGreyscale" value="true"/>
+        <Param name="ContributingTracks" value="false"/>
+        <Param name="Type" value="VeroV22"/>
+        <Param name="DisplayType" value="Vero v2.2"/>
+        <Param name="StrobeType" value="IR"/>
+        <Param name="StrobeTemperature" value="0"/>
+        <Param name="CameraPoETemperature" value="60"/>
+        <Param name="CameraDSPTemperature" value="60"/>
+        <Param name="CameraSensorTemperature" value="0"/>
+        <Param name="SensorWidth" value="2048"/>
+        <Param name="SensorHeight" value="1088"/>
+        <Param name="SensorWindowLeft" value="0"/>
+        <Param name="SensorWindowRight" value="2047"/>
+        <Param name="SensorWindowTop" value="0"/>
+        <Param name="SensorWindowBottom" value="1087"/>
+        <Param name="Revision" value="1"/>
+        <Param name="MACAddress" value="00:00:37:20:b5:fd"/>
+        <Param name="SerialNumber" value="VE22-S-12196"/>
+        <Param name="HeadSerialNumber" value=""/>
+        <Param name="IPAddress" value="192.168.10.12"/>
+        <Param name="StreamDestinationAddress" value="Default"/>
+        <Param name="StreamDestinationAddressWarning" value=""/>
+        <Param name="FirmwareVersion" value="725"/>
+        <Param name="FirmwareComplete" value="true"/>
+        <Param name="BackFocus" value="false"/>
+        <Param name="MinRatio" value="0.5"/>
+        <Param name="MaxPixelsPerLineToCircleFit" value="50"/>
+        <Param name="VideoCalibrationReady" value="false"/>
+        <Param name="VideoNotCalibrationReady" value="false"/>
+        <Param name="ThresholdTableMode" value="2"/>
+        <Param name="EnableLEDs" value="true"/>
+        <Param name="EnableDisplays" value="true"/>
+        <Param name="EnableTap" value="false"/>
+        <Param name="EnableAccel" value="true"/>
+        <Param name="ResetCalibration" value="false"/>
+        <Param name="FocalLength" value="0.0070888049352249242"/>
+        <Param name="RadialParam1" value="0.44808906382250779"/>
+        <Param name="RadialParam2" value="0.13106995936525986"/>
+        <Param name="Reboot" value="false"/>
+        <Param name="Bumped" value="false"/>
+        <Param name="BumpTolerance" value="0.0900000036"/>
+        <Param name="Orientation" value="Down"/>
+      </ParamList>
+      <ParamList name="2143749">
+        <Param name="Name" value=""/>
+        <Param name="Id" value="2143749"/>
+        <Param name="UserId" value="0"/>
+        <Param name="Enabled" value="true"/>
+        <Param name="EnableStrobe" value="true"/>
+        <Param name="Strobe" value="1"/>
+        <Param name="SensorMode" value="normal"/>
+        <Param name="Threshold" value="0.20000000000000001"/>
+        <Param name="Gain" value="1"/>
+        <Param name="Greyscale" value="0"/>
+        <Param name="EnableDSP" value="true"/>
+        <Param name="EnableWindowedFrameRates" value="true"/>
+        <Param name="CentroidTrackingEnable" value="false"/>
+        <Param name="CentroidTrackingMarkerVelocity" value="5"/>
+        <Param name="Connected" value="true"/>
+        <Param name="SyncMaster" value="false"/>
+        <Param name="Warning" value=""/>
+        <Param name="ContributingCentroids" value="true"/>
+        <Param name="ContributingGreyscale" value="true"/>
+        <Param name="ContributingTracks" value="false"/>
+        <Param name="Type" value="VeroV22"/>
+        <Param name="DisplayType" value="Vero v2.2"/>
+        <Param name="StrobeType" value="IR"/>
+        <Param name="StrobeTemperature" value="0"/>
+        <Param name="CameraPoETemperature" value="60"/>
+        <Param name="CameraDSPTemperature" value="63"/>
+        <Param name="CameraSensorTemperature" value="0"/>
+        <Param name="SensorWidth" value="2048"/>
+        <Param name="SensorHeight" value="1088"/>
+        <Param name="SensorWindowLeft" value="0"/>
+        <Param name="SensorWindowRight" value="2047"/>
+        <Param name="SensorWindowTop" value="0"/>
+        <Param name="SensorWindowBottom" value="1087"/>
+        <Param name="Revision" value="1"/>
+        <Param name="MACAddress" value="00:00:37:20:b6:05"/>
+        <Param name="SerialNumber" value="VE22-S-12194"/>
+        <Param name="HeadSerialNumber" value=""/>
+        <Param name="IPAddress" value="192.168.10.11"/>
+        <Param name="StreamDestinationAddress" value="Default"/>
+        <Param name="StreamDestinationAddressWarning" value=""/>
+        <Param name="FirmwareVersion" value="725"/>
+        <Param name="FirmwareComplete" value="true"/>
+        <Param name="BackFocus" value="false"/>
+        <Param name="MinRatio" value="0.5"/>
+        <Param name="MaxPixelsPerLineToCircleFit" value="50"/>
+        <Param name="VideoCalibrationReady" value="false"/>
+        <Param name="VideoNotCalibrationReady" value="false"/>
+        <Param name="ThresholdTableMode" value="2"/>
+        <Param name="EnableLEDs" value="true"/>
+        <Param name="EnableDisplays" value="true"/>
+        <Param name="EnableTap" value="false"/>
+        <Param name="EnableAccel" value="true"/>
+        <Param name="ResetCalibration" value="false"/>
+        <Param name="FocalLength" value="0.0071434516006260544"/>
+        <Param name="RadialParam1" value="0.45416793092954694"/>
+        <Param name="RadialParam2" value="0.099655680756269932"/>
+        <Param name="Reboot" value="false"/>
+        <Param name="Bumped" value="false"/>
+        <Param name="BumpTolerance" value="0.0900000036"/>
+        <Param name="Orientation" value="Down"/>
+      </ParamList>
+    </ParamListGroup>
+  </ParamDefinitionList>
+
+  <ParamDefinitionList name="Mk6System">
+    <ParamListGroup name="">
+      <ParamList name="">
+        <Param name="FrameRate" value="1200"/>
+        <Param name="ActualFrameRate" value="1200"/>
+        <Param name="AcceptedFrameLatency" value="0"/>
+        <Param name="ManualFrameLatency" value="0"/>
+        <Param name="JitterReductionStrategy" value="0"/>
+        <Param name="MasterSelect" value="0"/>
+        <Param name="GenlockStandard" value="256"/>
+        <Param name="GenlockEnabled" value="false"/>
+        <Param name="DetectedGenlockStandard" value="0"/>
+        <Param name="AutoGenlock" value="false"/>
+        <Param name="GenlockStatus" value="None"/>
+        <Param name="GenlockOffset" value="0"/>
+        <Param name="VESAOffset" value="0"/>
+        <Param name="TimecodeSource" value="8"/>
+        <Param name="TimecodeDropFrame"/>
+        <Param name="TimecodeEnabled" value="false"/>
+        <Param name="TimecodeStandard" value="0"/>
+        <Param name="TimecodeStatus" value="None"/>
+        <Param name="Warning" value=""/>
+        <Param name="BufferSize" value="2048"/>
+        <Param name="BufferSizeRatio" value="1"/>
+        <Param name="Rewind" value="0"/>
+        <Param name="RebootAll" value="false"/>
+        <Param name="RealTimeBufferSize" value="1"/>
+        <Param name="MinimizeLatency" value="true"/>
+        <Param name="MinimizeJitter" value="false"/>
+      </ParamList>
+    </ParamListGroup>
+  </ParamDefinitionList>
+
+  <ParamDefinitionList name="OSCStream">
+    <ParamListGroup name="">
+      <ParamList name="">
+        <Param name="StreamEnabled" value="false"/>
+        <Param name="IPAddr" value="localhost"/>
+        <Param name="Port" value="7000"/>
+        <Param name="BufferSize" value="4096"/>
+        <Param name="SingleSubjectName" value="false"/>
+        <Param name="EnableSegments" value="false"/>
+        <Param name="EnableMarkers" value="false"/>
+        <Param name="EnableUnlabeledMarkers" value="false"/>
+        <Param name="EnableCentroids" value="false"/>
+        <Param name="EnableForcePlate" value="false"/>
+        <Param name="EnableDevices" value="false"/>
+        <Param name="EnableGazeVector" value="false"/>
+      </ParamList>
+    </ParamListGroup>
+  </ParamDefinitionList>
+
+  <ParamDefinitionList name="ObjectTypesList">
+    <ParamListGroup name="">
+      <ParamList name="ObjectTypesList">
+        <Param name="ObjectTypes" value="22 serialization::archive 17 0 0 0 0"/>
+        <Param name="TypeAssignments" value="22 serialization::archive 17 0 0 2 0 0 0 4 Wand 17 InteractionDevice 5 Wand1 7 General"/>
+      </ParamList>
+    </ParamListGroup>
+  </ParamDefinitionList>
+
+  <ParamDefinitionList name="UDPStream">
+    <ParamListGroup name="">
+      <ParamList name="">
+        <Param name="StreamEnabled" value="true"/>
+        <Param name="BlockSize" value="256"/>
+        <Param name="ObjectPerPort" value="false"/>
+        <Param name="IPAddr" value="192.168.50.56"/>
+        <Param name="Port" value="51001"/>
+      </ParamList>
+    </ParamListGroup>
+  </ParamDefinitionList>
+
+  <ParamDefinitionList name="VRPN">
+    <ParamListGroup name="">
+      <ParamList name="">
+        <Param name="VRPNFilterEnabled" value="false"/>
+        <Param name="TranslationMinCutOff" value="1.151"/>
+        <Param name="TranslationBeta" value="0.5"/>
+        <Param name="RotationMinCutOff" value="1.5"/>
+        <Param name="RotationBeta" value="0.5"/>
+      </ParamList>
+    </ParamListGroup>
+  </ParamDefinitionList>
+
+  <ParamDefinitionList name="Vicon">
+    <ParamListGroup name="">
+      <ParamList name="">
+        <Param name="SOURCE" value="Tracker 3.9.0.128020h"/>
+      </ParamList>
+    </ParamListGroup>
+  </ParamDefinitionList>
+
+</ParamStore>

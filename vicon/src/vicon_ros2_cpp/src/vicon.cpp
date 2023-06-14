@@ -31,6 +31,7 @@ struct frame_info{
   bool valid=false;
   double latency_seconds;
   int frame_number;
+  float frame_rate;
   std::vector<segment_info> segments;
 };
 
@@ -60,7 +61,7 @@ class ViconRos2 : public rclcpp::Node
       this->px4_pub_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/fmu/in/vehicle_visual_odometry",10);
 
       timer_ = this->create_wall_timer(
-        25ms, std::bind(&ViconRos2::timer_callback, this));
+        10ms, std::bind(&ViconRos2::timer_callback, this)); //100 Hz
     }
 
   private:
@@ -71,13 +72,15 @@ class ViconRos2 : public rclcpp::Node
     void timer_callback()
     {
       geometry_msgs::msg::PoseStamped new_pose;
-      geometry_msgs::msg::Point traslation;
+      geometry_msgs::msg::Point translation;
       geometry_msgs::msg::Quaternion q;
       frame_info new_frame = this->get_position("drone1");
+
       if((new_frame.segments.size() != 0) && new_frame.valid){
-        traslation.x = new_frame.segments[0].px / 1000;
-        traslation.y = new_frame.segments[0].py / 1000;
-        traslation.z = new_frame.segments[0].pz / 1000;
+        // send only the info about the first segment on the list
+        translation.x = new_frame.segments[0].px / 1000;
+        translation.y = new_frame.segments[0].py / 1000;
+        translation.z = new_frame.segments[0].pz / 1000;
         q.x = new_frame.segments[0].qx;        
         q.y = new_frame.segments[0].qy;
         q.z = new_frame.segments[0].qz;
@@ -85,12 +88,12 @@ class ViconRos2 : public rclcpp::Node
         
         new_pose.header.frame_id = "map";
         new_pose.header.stamp = this->get_clock()->now();
-        new_pose.pose.position = traslation;
+        new_pose.pose.position = translation;
         new_pose.pose.orientation = q;
 
-        this->vicon_pub_->publish(new_pose);
+        this->vicon_pub_->publish(new_pose); //100 Hz
         px4_msgs::msg::VehicleOdometry px4_msg = this->create_odom_msg(new_pose, new_frame.latency_seconds);
-        this->px4_pub_->publish(px4_msg);
+        this->px4_pub_->publish(px4_msg); //100 Hz
       }
 
 
@@ -121,6 +124,8 @@ class ViconRos2 : public rclcpp::Node
       this->vicon_client.GetFrame();
       Output_GetLatencyTotal latency = this->vicon_client.GetLatencyTotal();
       Output_GetFrameNumber frame_number = this->vicon_client.GetFrameNumber();
+      Output_GetFrameRate frame_rate = this->vicon_client.GetFrameRate();
+      // RCLCPP_INFO(this->get_logger(), "Rate= %f (Hz) Result= %d", frame_rate.FrameRateHz, frame_rate.Result);
       /*Get all objects*/
       Output_GetSubjectCount sub_cnt = this->vicon_client.GetSubjectCount();
       
@@ -132,6 +137,8 @@ class ViconRos2 : public rclcpp::Node
           std::vector<segment_info> segments = this->get_segments_info(obj_name);
           new_frame.latency_seconds = latency.Total;
           new_frame.frame_number = int(frame_number.FrameNumber);
+          new_frame.frame_rate = float(frame_rate.FrameRateHz);
+
           new_frame.segments = segments;
           new_frame.valid = true;
         }
@@ -143,11 +150,12 @@ class ViconRos2 : public rclcpp::Node
     std::vector<segment_info> get_segments_info(std::string obj_name){
       std::vector<segment_info> result;
       Output_GetSegmentCount seg_cnt = this->vicon_client.GetSegmentCount(obj_name);
+      // RCLCPP_INFO(this->get_logger(), "Number of Segments = %d", seg_cnt.SegmentCount);
       if (seg_cnt.Result == Result::Success){
           for(int j = 0; j<int(seg_cnt.SegmentCount); j++){
             Output_GetSegmentName seg_name = this-> vicon_client.GetSegmentName(obj_name, j);
             Output_GetSegmentGlobalTranslation seg_trasl = this->vicon_client.GetSegmentGlobalTranslation(obj_name, seg_name.SegmentName);
-            Output_GetSegmentLocalRotationQuaternion seg_quat = this-> vicon_client.GetSegmentLocalRotationQuaternion(obj_name, seg_name.SegmentName);
+            Output_GetSegmentGlobalRotationQuaternion seg_quat = this-> vicon_client.GetSegmentGlobalRotationQuaternion(obj_name, seg_name.SegmentName);
 
             if(!seg_trasl.Occluded){
               segment_info new_seg;
@@ -165,7 +173,10 @@ class ViconRos2 : public rclcpp::Node
 
             }
           }
+      }else{
+              RCLCPP_INFO(this->get_logger(), "Result = %d", seg_cnt.Result);
       }
+
       return result;
     }
 
