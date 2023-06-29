@@ -91,6 +91,10 @@ class ViconRos2 : public rclcpp::Node
       if(this->last_frame != nullptr){
         uint64_t frame_timestamp_usec = this->frame_to_timestamp(this->last_frame->frame_number - this->vicon_frame_offset);
         px4_msgs::msg::VehicleOdometry px4_msg = this->create_odom_msg(this->last_pose, frame_timestamp_usec);
+        float latency = float(px4_msg.timestamp - px4_msg.timestamp_sample) / 1E3; // [millisec]
+        if (latency > 200E-3){
+          RCLCPP_WARN(this->get_logger(), "Latency too high! %.2f ms", latency);
+        }
 
         this->px4_pub_->publish(px4_msg);
         // RCLCPP_INFO(this->get_logger(), "Framerate=%.2f, Timestamp=%ld, timestamp_sample=%ld, diff=%ld",
@@ -100,6 +104,8 @@ class ViconRos2 : public rclcpp::Node
 
         
         this->last_frame = nullptr;
+      }else{
+        // RCLCPP_WARN(this->get_logger(), "Frame not available! : %d", this->missed_frames++);
       }
     }
 
@@ -239,6 +245,7 @@ class ViconRos2 : public rclcpp::Node
     std::shared_ptr<geometry_msgs::msg::PoseStamped> last_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
     int px4_timestamp = 0;
     uint64_t vicon_frame_offset = 0;
+    int missed_frames = 0;
 };
 
 int main(int argc, char * argv[])
