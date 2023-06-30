@@ -71,13 +71,13 @@ class ViconRos2 : public rclcpp::Node
       this->px4_pub_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/fmu/in/vehicle_visual_odometry",10);
 
       timer_ = this->create_wall_timer(
-        10ms, std::bind(&ViconRos2::timer_callback, this)); // 100 Hz
+        10ms, std::bind(&ViconRos2::vicon_rcv_cb, this)); // 100 Hz
       timer_px4 = this->create_wall_timer(
         20ms, std::bind(& ViconRos2::pub_px4_odom, this)); // 50 Hz
     }
 
   private:
-
+    /* VICON frame number to timestamp in usec */
     uint64_t frame_to_timestamp(int frame_num){
       float delta_time_sec = 1.0/100.0; // [sec] time between frames
       float frame_timestamp_sec = float(frame_num) * delta_time_sec;
@@ -87,23 +87,29 @@ class ViconRos2 : public rclcpp::Node
       return frame_timestamp_usec;
     }
 
+    /* Create and publish a VehicleOdometry message for PX4 */
     void pub_px4_odom(){
 
-      RCLCPP_INFO(this->get_logger(), "Frame buffer length = %ld",
-              this->frame_buffer.size());
-
-      if (this->frame_buffer.size() >= 2){
-        // Get first element of the frame buffer
-        frame_info last_frame = this->frame_buffer.front(); 
-        // Removes 2 elements from the list: 100 Hz -> 50 Hz
-        this->frame_buffer.pop_front();
-        this->frame_buffer.pop_front();
-        uint64_t frame_timestamp_usec = this->frame_to_timestamp(last_frame.frame_number - this->vicon_frame_offset);
-        px4_msgs::msg::VehicleOdometry px4_msg = this->create_odom_msg(this->last_pose, frame_timestamp_usec);
-        float latency = float(px4_msg.timestamp - px4_msg.timestamp_sample) / 1E3; // [millisec]
+      if (this->frame_buffer.size() >= 4){
+        float frame_latency = 0;
+        frame_info last_frame;
+        /* Discard frames too old */
+        do{
+          last_frame = this->frame_buffer.front(); 
+          frame_buffer.pop_front();
+          frame_latency = get_frame_delay_ms(last_frame);
+        }while(frame_latency > max_pub_latency && frame_buffer.size() > 0);
         
-        if (latency > 300E-3){
-          RCLCPP_WARN(this->get_logger(), "Latency too high! %.2f ms", latency);
+        // Removes 2 elements from the list: 100 Hz -> 50 Hz
+        if (frame_buffer.size() > 0){
+          this->frame_buffer.pop_front();
+        }
+
+        uint64_t frame_timestamp_usec = this->frame_to_timestamp(last_frame.frame_number - this->vicon_frame_offset);
+        px4_msgs::msg::VehicleOdometry px4_msg = this->create_odom_msg(last_frame, frame_timestamp_usec);
+        
+        if (frame_latency > max_pub_latency){
+          RCLCPP_WARN(this->get_logger(), "Frame latency too high! %.2f ms", frame_latency);
         }
 
         this->px4_pub_->publish(px4_msg);
@@ -112,7 +118,7 @@ class ViconRos2 : public rclcpp::Node
         // RCLCPP_INFO(this->get_logger(), "Frame number=%ld, Frame delta =%ld, timestamp_sample=%ld",
         //       this->last_frame->frame_number, this->last_frame->frame_number - this->vicon_frame_offset, px4_msg.timestamp_sample);
       }else{
-        RCLCPP_WARN(this->get_logger(), "Buffer of frames is empty!");
+        // RCLCPP_WARN(this->get_logger(), "Buffer of frames is empty!");
       }
     }
 
@@ -120,11 +126,17 @@ class ViconRos2 : public rclcpp::Node
       this->px4_timestamp = msg.timestamp;
     }
 
-    void timer_callback()
+    void vicon_rcv_cb()
     {
       geometry_msgs::msg::Point translation;
       geometry_msgs::msg::Quaternion q;
-      frame_info new_frame = this->get_position("drone1");
+      float frame_latency = 0;
+      frame_info new_frame;
+
+      do{
+        new_frame = this->get_position("drone1");
+        frame_latency = get_frame_delay_ms(new_frame);
+      }while(frame_latency > max_rcv_latency);
 
       if((new_frame.segments.size() != 0) && new_frame.valid){
         // send only the info about the first segment on the list
@@ -143,7 +155,6 @@ class ViconRos2 : public rclcpp::Node
 
         this->vicon_pub_->publish(*this->last_pose);
         this->frame_buffer.push_back(new_frame);
-        // this->last_frame = std::make_shared<frame_info>(new_frame);
 
         // RCLCPP_INFO(this->get_logger(), "Frame number=%ld, Frame delta =%ld",
         //       this->last_frame->frame_number, this->last_frame->frame_number - this->vicon_frame_offset);
@@ -152,21 +163,21 @@ class ViconRos2 : public rclcpp::Node
 
     }
 
-    px4_msgs::msg::VehicleOdometry create_odom_msg(geometry_msgs::msg::PoseStamped::SharedPtr pose, uint64_t ts_sample){
+    px4_msgs::msg::VehicleOdometry create_odom_msg(frame_info frame, uint64_t ts_sample){
       px4_msgs::msg::VehicleOdometry new_msg;
       new_msg.timestamp = this->get_timestamp();
       new_msg.timestamp_sample = ts_sample;
       new_msg.pose_frame = px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD;
       new_msg.position = {
-        float(pose->pose.position.x),
-        float(pose->pose.position.y),
-        float(pose->pose.position.z)
+        float(frame.segments[0].px) / 1000,
+        float(frame.segments[0].py) / 1000,
+        float(frame.segments[0].pz) / 1000
       };
       new_msg.q = {
-        float(pose->pose.orientation.w),
-        float(pose->pose.orientation.x),
-        float(pose->pose.orientation.y),
-        float(pose->pose.orientation.z)
+        float(frame.segments[0].qw),
+        float(frame.segments[0].qx),
+        float(frame.segments[0].qy),
+        float(frame.segments[0].qz)
       };
       new_msg.position_variance = {0.001, 0.001, 0.001};
       // float norm = sqrt(pow(new_msg.q[0],2.0)+ pow(new_msg.q[1],2.0)+ pow(new_msg.q[2],2.0), pow(new_msg.q[3],2.0));
@@ -236,10 +247,18 @@ class ViconRos2 : public rclcpp::Node
       return result;
     }
 
+    /* Get microseconds from startup */
     uint64_t get_timestamp(){
       rclcpp::Duration diff = this->now() - this->start_time;
       std::chrono::microseconds num_of_us = diff.to_chrono<std::chrono::microseconds>();
       return num_of_us.count();
+    }
+
+    /* Get the milliseconds from the sampling to now */
+    float get_frame_delay_ms(frame_info frame){
+      uint64_t now = get_timestamp();
+      uint64_t frame_ts = frame_to_timestamp(frame.frame_number);
+      return float(now - frame_ts) / 1E3;
     }
 
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr vicon_pub_;
@@ -249,12 +268,12 @@ class ViconRos2 : public rclcpp::Node
     std::string vicon_tracker_ip = "192.168.50.56";
     ViconDataStreamSDK::CPP::Client vicon_client;
     rclcpp::Time start_time;
-    // std::shared_ptr<frame_info> last_frame = nullptr;
     std::list<frame_info> frame_buffer = {};
     std::shared_ptr<geometry_msgs::msg::PoseStamped> last_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
     int px4_timestamp = 0;
     uint64_t vicon_frame_offset = 0;
-    int missed_frames = 0;
+    float max_rcv_latency = 20; // FIXME: valore da rivedere;
+    float max_pub_latency = 60; // FIXME: valore da rivedere;
 };
 
 int main(int argc, char * argv[])
