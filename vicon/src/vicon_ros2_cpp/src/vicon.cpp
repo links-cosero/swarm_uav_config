@@ -107,11 +107,17 @@ class ViconRos2 : public rclcpp::Node
         if (frame_buffer.size() > 0){
           // this->frame_buffer.pop_front();
         }
-        RCLCPP_WARN(this->get_logger(), "Frame latency = %.2f ms", frame_latency);
+        // RCLCPP_WARN(this->get_logger(), "Frame latency = %.2f ms", frame_latency);
 
         uint64_t frame_timestamp_usec = this->frame_to_timestamp(last_frame.frame_number);
         px4_msgs::msg::VehicleOdometry px4_msg = this->create_odom_msg(last_frame, frame_timestamp_usec);
         
+        if ((get_timestamp() - last_px4_pub_time) > 70E3){
+          // RCLCPP_WARN(this->get_logger(), "Publication latency high! %.2f ms", 
+          //   (get_timestamp() - last_px4_pub_time) / 1E3);
+        }
+        last_px4_pub_time = px4_msg.timestamp;
+
         if (frame_latency > max_pub_latency){
           RCLCPP_WARN(this->get_logger(), "Frame latency too high! %.2f ms", frame_latency);
         }
@@ -280,6 +286,7 @@ class ViconRos2 : public rclcpp::Node
     uint64_t vicon_frame_offset = 0;
     float max_rcv_latency = 30; // FIXME: valore da rivedere;
     float max_pub_latency = 60; // FIXME: valore da rivedere;
+    uint64_t last_px4_pub_time = 0;
 };
 
 int main(int argc, char * argv[])

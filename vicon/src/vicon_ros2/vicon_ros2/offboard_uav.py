@@ -1,6 +1,18 @@
 """
 Python implementation of Offboard Control
 
+param1 is set to 1 to enable the custom mode.
+param2 is set to 6 to indicate the offboard mode.
+Other options for param2 include:
+param2 = 1 (MANUAL)
+param2 = 2 (ALTCTL)
+param2 = 3 (POSCTL)
+param2 = 4 (AUTO)
+param2 = 5 (ACRO)
+param2 = 6 (OFFBOARD)
+param2 = 7 (STABILIZED)
+param2 = 8 (RATTITUDE)
+
 """
 import rclpy
 import time
@@ -18,7 +30,15 @@ from px4_msgs.msg import VehicleAttitude
 from rclpy.qos import (
     QoSProfile, 
     QoSReliabilityPolicy, 
-    QoSHistoryPolicy)
+    QoSHistoryPolicy,
+    QoSDurabilityPolicy)
+
+qos_profile = QoSProfile(
+            reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
+            durability=QoSDurabilityPolicy.RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+            history=QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+            depth=1
+        )
 
 
 class OffboardControl(Node):
@@ -28,12 +48,12 @@ class OffboardControl(Node):
         self.offboard_control_mode_publisher_ = self.create_publisher(OffboardControlMode,"/fmu/in/offboard_control_mode", 10)
         self.trajectory_setpoint_publisher_ = self.create_publisher(TrajectorySetpoint,"/fmu/in/trajectory_setpoint", 10)
         self.vehicle_command_publisher_ = self.create_publisher(VehicleCommand,"/fmu/in/vehicle_command", 10)
-        self.vehicle_status_publisher_ = self.create_publisher(VehicleStatus,"/fmu/in/vehicle_status", 10)
-
+        self.vehicle_status = self.create_subscription(VehicleStatus, "/fmu/out/vehicle_status", self.v_status_cb, qos_profile)
+        self.vehicle_status_msg = None
 
         self.offboard_setpoint_counter_ = 0
         # Stato missione per macchina a stati
-        self.mission_state = 0
+        self.mission_state = -1
         # Waypoint corrente pubblicato da timer_offboard_cb()
         self.current_waypoint = [0.0, 0.0, 0.0]
 
@@ -53,30 +73,61 @@ class OffboardControl(Node):
         # self.timestamp = 0
         # self.timestamp_sample = 0     
     
+    def v_status_cb(self, msg: VehicleStatus):
+        self.vehicle_status_msg = msg
 
     def mission(self):
         """ Funzione mission organizzata come macchina a stati """
+        if self.vehicle_status_msg == None:
+            return
 
-        if self.mission_state == 0:
+        
+        if self.mission_state == -1:
+            if not self.vehicle_status_msg.nav_state == VehicleStatus.NAVIGATION_STATE_STAB:
+                self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1., 7.)
+                self.mission_state = -1
+            else:
+                self.mission_state = 0
+
+
+        elif self.mission_state == 0:
             """ Arming and takeoff to 1st waypoint """
-            self.get_logger().info("Mission started")
-            self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1., 6.)
-            self.mission_state = 1
+            if self.vehicle_status_msg.pre_flight_checks_pass:
+                
+                if not self.vehicle_status_msg.nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD:
+                    self.get_logger().info("Mission started")
+                    self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1., 6.)
+                    self.mission_state = 0
+                else:
+                    self.mission_state = 1                    
+           
+            else:
+                self.mission_state = 0
 
         elif self.mission_state == 1:    
-            self.arm()
-            self.get_logger().info("Vehicle armed")
-            # Imposta il primo waypoint
-            self.get_logger().info("First waypoint")
-            self.current_waypoint = [0.0, 0.0, -0.3]
-            self.mission_state = 3
+            if not self.vehicle_status_msg.arming_state == VehicleStatus.ARMING_STATE_ARMED:
+                self.arm()
+                self.mission_state =1 
+            else:
+                self.get_logger().info("Vehicle armed")
+                # Imposta il primo waypoint
+                self.get_logger().info("First waypoint")
+                self.current_waypoint = [0.0, 0.0, -0.5]
+                self.mission_state = 2
 
-        # elif self.mission_state == 2:
-        #     """Waypoint 2"""
-        #     self.get_logger().info("Second waypoint")
-        #     # Imposta secondo waypoint
-        #     self.current_waypoint = [2.0, 2.0, -4.0]
-        #     self.mission_state = 3
+        elif self.mission_state == 2:
+            """Waypoint 2"""
+            self.get_logger().info("Second waypoint")
+            # Imposta secondo waypoint
+            self.current_waypoint = [0.0, 1.0, 1.0]
+            self.mission_state = 5
+        
+        elif self.mission_state == 5:
+            """Waypoint 2"""
+            self.get_logger().info("Second waypoint")
+            # Imposta secondo waypoint
+            self.current_waypoint = [0.0, 0.0, 1.0]
+            self.mission_state = 3
 
         elif self.mission_state == 3:
             """Landing"""
