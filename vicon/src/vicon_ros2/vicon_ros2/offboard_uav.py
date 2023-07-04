@@ -119,26 +119,26 @@ class OffboardControl(Node):
             """Waypoint 2"""
             self.get_logger().info("Second waypoint")
             # Imposta secondo waypoint
-            self.current_waypoint = [0.0, 1.0, 1.0]
-            self.mission_state = 5
-        
-        elif self.mission_state == 5:
-            """Waypoint 2"""
-            self.get_logger().info("Second waypoint")
-            # Imposta secondo waypoint
-            self.current_waypoint = [0.0, 0.0, 1.0]
+            self.current_waypoint = [0.0, 1.0, -1.0]
             self.mission_state = 3
+        
+        # elif self.mission_state == 5:
+        #     """Waypoint 2"""
+        #     self.get_logger().info("Second waypoint")
+        #     # Imposta secondo waypoint
+        #     self.current_waypoint = [0.0, 0.0, 1.0]
+        #     self.mission_state = 3
 
         elif self.mission_state == 3:
             """Landing"""
             self.get_logger().info("Landing request")
-            self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
-            self.mission_state = 4
-        
-        elif self.mission_state == 4:
+            self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND, float('nan'), float('nan'))
             self.timer_offboard.cancel()
             self.get_logger().info("Mission finished")
             self.timer_mission.cancel()
+            self.mission_state = 4
+        
+        elif self.mission_state == 4:
             exit()        
     
     def timer_offboard_cb(self):
