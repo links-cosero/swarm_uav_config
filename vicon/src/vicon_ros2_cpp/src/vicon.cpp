@@ -43,7 +43,10 @@ class ViconRos2 : public rclcpp::Node
     : Node("vicon")
     {
       /*ViconSDK client init*/
-      this->vicon_client.Connect(this->vicon_tracker_ip);
+      Output_Connect result =  this->vicon_client.Connect(this->vicon_tracker_ip);
+      if (result.Result == Result::NotConnected){
+        RCLCPP_WARN(get_logger(), "Client not connected!");
+      }
       this->vicon_client.EnableSegmentData();
       this->vicon_client.SetStreamMode(StreamMode::ServerPush);
       this->vicon_client.SetAxisMapping(
@@ -80,7 +83,7 @@ class ViconRos2 : public rclcpp::Node
     /* VICON frame number to timestamp in usec */
     uint64_t frame_to_timestamp(int frame_num){
       float delta_time_sec = 1.0/100.0; // [sec] time between frames
-      float frame_timestamp_sec = float(frame_num) * delta_time_sec;
+      float frame_timestamp_sec = float(frame_num - vicon_frame_offset) * delta_time_sec;
       uint64_t frame_timestamp_usec = uint64_t(frame_timestamp_sec * 1E6);
       // RCLCPP_INFO(this->get_logger(), "Delta sec= %f (s) frame_num= %d, frame_ts_sec=%f, frame_ts_usec=%ld", 
       //         delta_time_sec, this->last_frame->frame_number, frame_timestamp_sec, frame_timestamp_usec);
@@ -102,10 +105,11 @@ class ViconRos2 : public rclcpp::Node
         
         // Removes 2 elements from the list: 100 Hz -> 50 Hz
         if (frame_buffer.size() > 0){
-          this->frame_buffer.pop_front();
+          // this->frame_buffer.pop_front();
         }
+        RCLCPP_WARN(this->get_logger(), "Frame latency = %.2f ms", frame_latency);
 
-        uint64_t frame_timestamp_usec = this->frame_to_timestamp(last_frame.frame_number - this->vicon_frame_offset);
+        uint64_t frame_timestamp_usec = this->frame_to_timestamp(last_frame.frame_number);
         px4_msgs::msg::VehicleOdometry px4_msg = this->create_odom_msg(last_frame, frame_timestamp_usec);
         
         if (frame_latency > max_pub_latency){
@@ -136,9 +140,12 @@ class ViconRos2 : public rclcpp::Node
       do{
         new_frame = this->get_position("drone1");
         frame_latency = get_frame_delay_ms(new_frame);
+        // RCLCPP_INFO(get_logger(), "Frame latency: %.2f ms", frame_latency);
       }while(frame_latency > max_rcv_latency);
 
+
       if((new_frame.segments.size() != 0) && new_frame.valid){
+        geometry_msgs::msg::PoseStamped last_pose;
         // send only the info about the first segment on the list
         translation.x = new_frame.segments[0].px / 1000;
         translation.y = new_frame.segments[0].py / 1000;
@@ -148,12 +155,12 @@ class ViconRos2 : public rclcpp::Node
         q.z = new_frame.segments[0].qz;
         q.w = new_frame.segments[0].qw;        
         
-        this->last_pose->header.frame_id = "map";
-        this->last_pose->header.stamp = this->get_clock()->now();
-        this->last_pose->pose.position = translation;
-        this->last_pose->pose.orientation = q;
+        last_pose.header.frame_id = "map";
+        last_pose.header.stamp = this->get_clock()->now();
+        last_pose.pose.position = translation;
+        last_pose.pose.orientation = q;
 
-        this->vicon_pub_->publish(*this->last_pose);
+        this->vicon_pub_->publish(last_pose);
         this->frame_buffer.push_back(new_frame);
 
         // RCLCPP_INFO(this->get_logger(), "Frame number=%ld, Frame delta =%ld",
@@ -258,7 +265,7 @@ class ViconRos2 : public rclcpp::Node
     float get_frame_delay_ms(frame_info frame){
       uint64_t now = get_timestamp();
       uint64_t frame_ts = frame_to_timestamp(frame.frame_number);
-      return float(now - frame_ts) / 1E3;
+      return float(float(now) - float(frame_ts)) / 1E3;
     }
 
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr vicon_pub_;
@@ -269,10 +276,9 @@ class ViconRos2 : public rclcpp::Node
     ViconDataStreamSDK::CPP::Client vicon_client;
     rclcpp::Time start_time;
     std::list<frame_info> frame_buffer = {};
-    std::shared_ptr<geometry_msgs::msg::PoseStamped> last_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
     int px4_timestamp = 0;
     uint64_t vicon_frame_offset = 0;
-    float max_rcv_latency = 20; // FIXME: valore da rivedere;
+    float max_rcv_latency = 30; // FIXME: valore da rivedere;
     float max_pub_latency = 60; // FIXME: valore da rivedere;
 };
 
