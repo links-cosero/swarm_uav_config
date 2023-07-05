@@ -6,12 +6,14 @@ param set EKF2_MULTI_IMU 0
 param set EKF2_IMU_CTRL 1
 param set EKF2_BARO_CTRL 1
 param set EKF2_EV_CTRL 11
-param set EKF2_EV_DELAY 130
+param set EKF2_EV_DELAY 50
 param set EKF2_HGT_REF 3
 param set EKF2_ACC_NOISE 0.8
 param set EKF2_BARO_NOISE 6
 param set EKF2_GYR_NOISE 0.05
 param set EKF2_EV_NOISE_MD 0
+param set IMU_ACCEL_CUTOFF 30.0
+
 
 param set SYS_HAS_GPS 0
 param set SYS_HAS_BARO 1
@@ -19,8 +21,8 @@ param set GPS_CHECK 240
 param set GPS_CTRL 4
 param set SYS_HAS_MAG 0
 
-param set PWM_MAIN_TIM0 -3
-param set PWM_MAIN_TIM1 -3
+param set PWM_MAIN_TIM0 -2
+param set PWM_MAIN_TIM1 -2
 param set PWM_MAIN_FUNC1 101
 param set PWM_MAIN_FUNC4 102
 param set PWM_MAIN_FUNC2 103
@@ -29,3 +31,4 @@ param set PWM_MAIN_FUNC3 104
 uxrce_dds_client start -t serial -d /dev/ttyS2 -b 1500000
 
 # param set UXRCE_DDS_DOM_ID 0
+

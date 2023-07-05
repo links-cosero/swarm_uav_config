@@ -174,3 +174,31 @@ micro-xrce-dds-agent serial -D /dev/ttyS0 -b 1500000
 Ora eseguendo ROS 2 sulla ground station sarà in grado di ricevere i topic pubblicati dall'agent(che viene eseguito sulla companion computer), verificabile con il comando `ros2 topic list`. 
 
 Usando questa configurazione si può stabilire un collegamento tra ROS2 (eseguito sulla ground station) e PX4 sul flight controller, però non viene eseguita una istanza di ROS 2 sulla companion computer. 
+
+### Creazione service per startup automatico di XRCE-Agent
+Creare il file `/etc/systemd/system/xrce-agent.service`:
+```
+[Unit]
+Description=XRCE agent for PX4
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=0
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+ExecStart=/snap/bin/micro-xrce-dds-agent serial -D /dev/ttyS1 -b 1500000
+
+[Install]
+WantedBy=multi-user.target
+```
+Per attivarlo (solo la prima volta):
+```bash
+systemctl enable xrce-agent.service
+```
+
+A volte il l'agent parte in modo errato, non pubblicando i topic sulla rete, per risolvere riavviare il service con il comando:
+```bash
+systemctl restart xrce-agent.service
+```
