@@ -22,10 +22,10 @@ find_package(px4_msgs REQUIRED)
 add_executable(vicon 
     src/vicon.cpp)
 
-target_link_libraries(vicon ViconDataStreamSDK_CPP)
+target_link_libraries(vicon -lViconDataStreamSDK_CPP)
 ament_target_dependencies(vicon rclcpp geometry_msgs px4_msgs)
 target_include_directories(vicon PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
   $<INSTALL_INTERFACE:include>)
 target_compile_features(vicon PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
