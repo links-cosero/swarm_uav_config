@@ -11,6 +11,7 @@
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/quaternion.hpp"
 
+#include "px4_msgs/msg/vehicle_odometry.hpp"
 
 using namespace std::chrono_literals;
 using namespace std::chrono;
@@ -21,13 +22,13 @@ using std::placeholders::_1;
 struct segment_info{
   std::string object_name;
   std::string seg_name;
-  float px;
-  float py;
-  float pz;
-  float qx;
-  float qy;
-  float qz;
-  float qw;
+  float px = 0;
+  float py = 0;
+  float pz = 0;
+  float qx = 0;
+  float qy = 0;
+  float qz = 0;
+  float qw = 0;
 };
 
 /* Hold informations about all segments inside a single frame */
@@ -60,6 +61,7 @@ public:
         Direction::Down);
 
     this->vicon_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/vicon/drone1", 10);
+    this->px4_pub_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/fmu/in/vehicle_visual_odometry", 10);
 
     this->vicon_thread = std::thread(bind(& ViconRos2_v2::vicon_rcv, this));
 
@@ -75,11 +77,12 @@ public:
         frame_info new_frame = this->get_position("drone1");
         if(! new_frame.segments.empty()){
           int diff = millis_since_epoch - this->last_rcv_time;
-          RCLCPP_INFO(get_logger(), "Frame [%d] : x= %.4f y= %.4f z= %.4f  delta_time=%d ms",
-            millis_since_epoch, new_frame.segments[0].px, new_frame.segments[0].py, new_frame.segments[0].pz, diff);
+          RCLCPP_INFO(get_logger(), "Frame [%d] : x= %.4f y= %.4f z= %.4f  delta_time=%d ms buf_len=%ld",
+            millis_since_epoch, new_frame.segments[0].px, new_frame.segments[0].py, new_frame.segments[0].pz, diff, filter_buffer.size());
           this->last_rcv_time = millis_since_epoch;
           if(this->publish){
             this->ros_pub(new_frame);
+            this->publish_px4_msg(new_frame.segments[0]);
           }
           this->publish = ! this->publish;
         }else{
@@ -156,7 +159,9 @@ public:
             new_seg.qz = seg_quat.Rotation[2];
             new_seg.qw = seg_quat.Rotation[3];
 
-            result.push_back(new_seg);
+            // segment_info filtered_segment = this->filter_segment_data(new_seg);
+            // result.push_back(filtered_segment);            
+            result.push_back(new_seg);            
 
           }
         }
@@ -167,6 +172,64 @@ public:
     return result;
   }
 
+  segment_info filter_segment_data(segment_info new_segment){
+    // Keep buffer size limited
+    this->filter_buffer.push_back(new_segment);
+    while(filter_buffer.size() > 10){this->filter_buffer.pop_front();}
+    
+    segment_info average_seg = this->compute_buffer_average();
+    float x_diff = abs(new_segment.px - average_seg.px);
+    return average_seg;
+    if (x_diff > 30.0){
+      this->filter_buffer.pop_back();
+      return average_seg;
+    } else{
+      return new_segment;
+    }
+  }
+
+  segment_info compute_buffer_average(){
+    segment_info average_seg;
+    int n_samples = this->filter_buffer.size();
+    for(auto sample : this->filter_buffer){
+      average_seg.px += sample.px;
+      average_seg.py += sample.py;
+      average_seg.pz += sample.pz;
+      average_seg.qx += sample.qx;
+      average_seg.qy += sample.qy;
+      average_seg.qz += sample.qz;
+      average_seg.qw += sample.qw;
+    }
+    average_seg.px = average_seg.px / float(n_samples);
+    average_seg.py = average_seg.py / float(n_samples);
+    average_seg.pz = average_seg.pz / float(n_samples);
+    average_seg.qx = average_seg.qx / float(n_samples);
+    average_seg.qy = average_seg.qy / float(n_samples);
+    average_seg.qz = average_seg.qz / float(n_samples);
+    average_seg.qw = average_seg.qw / float(n_samples);
+    return average_seg;
+  }
+
+  void publish_px4_msg(segment_info segment){
+    px4_msgs::msg::VehicleOdometry new_msg;
+    new_msg.timestamp = duration_cast<microseconds>(system_clock::now().time_since_epoch()).count();
+    new_msg.timestamp_sample = new_msg.timestamp;
+    new_msg.pose_frame = px4_msgs::msg::VehicleOdometry::POSE_FRAME_FRD;
+    new_msg.position = {
+      segment.px / float(1000),        
+      segment.py / float(1000),        
+      segment.pz / float(1000)          
+    };
+    new_msg.q = {
+      segment.qw,      
+      segment.qx,      
+      segment.qy,      
+      segment.qz        
+    };
+    new_msg.position_variance = {0.001, 0.001, 0.001};
+    this->px4_pub_->publish(new_msg);
+  }
+
 private:
 	RetimingClient vicon_client;
 	std::string vicon_tracker_ip = "192.168.50.56";   // VICON local ip addr.
@@ -174,6 +237,8 @@ private:
   std::thread vicon_thread;
   bool publish = 0;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr vicon_pub_;
+  rclcpp::Publisher<px4_msgs::msg::VehicleOdometry>::SharedPtr px4_pub_;
+  std::list<segment_info> filter_buffer;
 };
 
 
