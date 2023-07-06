@@ -22,14 +22,27 @@ find_package(px4_msgs REQUIRED)
 add_executable(vicon 
     src/vicon.cpp)
 
-target_link_libraries(vicon -lViconDataStreamSDK_CPP)
+target_link_libraries(vicon ViconDataStreamSDK_CPP)
 ament_target_dependencies(vicon rclcpp geometry_msgs px4_msgs)
 target_include_directories(vicon PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   $<INSTALL_INTERFACE:include>)
 target_compile_features(vicon PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
-install(TARGETS vicon
+################################################################################
+
+add_executable(vicon_v2
+    src/viconv2.cpp)
+
+target_link_libraries(vicon_v2 libViconDataStreamSDK_CPP.so)
+ament_target_dependencies(vicon_v2 rclcpp geometry_msgs px4_msgs)
+target_include_directories(vicon_v2 PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  $<INSTALL_INTERFACE:include>)
+target_compile_features(vicon_v2 PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+
+
+install(TARGETS vicon vicon_v2
   DESTINATION lib/${PROJECT_NAME})
 
 # Install launch files.
