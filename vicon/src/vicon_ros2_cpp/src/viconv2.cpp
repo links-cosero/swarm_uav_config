@@ -40,6 +40,11 @@ struct frame_info{
   std::vector<segment_info> segments;
 };
 
+rclcpp::QoS pub_qos = rclcpp::QoS(10)
+		.reliability(RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+		.durability(RMW_QOS_POLICY_DURABILITY_VOLATILE)
+		.history(RMW_QOS_POLICY_HISTORY_KEEP_LAST);
+
 class ViconRos2_v2 : public rclcpp::Node
 {
 public:
@@ -60,38 +65,38 @@ public:
         Direction::Right,
         Direction::Down);
 
-    this->vicon_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/vicon/drone1", 10);
+    this->vicon_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/vicon/drone1", pub_qos);
     this->px4_pub_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/fmu/in/vehicle_visual_odometry", 10);
 
-    this->vicon_thread = std::thread(bind(& ViconRos2_v2::vicon_rcv, this));
+    // this->vicon_thread = std::thread(bind(& ViconRos2_v2::vicon_rcv, this));
+    this->timer_20ms = create_wall_timer(20ms, std::bind(& ViconRos2_v2::vicon_rcv, this));
 
 	}
 
 	void vicon_rcv(){
-    while(true){
-      Output_WaitForFrame WaitOutput = vicon_client.WaitForFrame();
-      if( WaitOutput.Result == Result::Success )
-      {
-        this->vicon_client.UpdateFrame();
-        int millis_since_epoch = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
-        frame_info new_frame = this->get_position("drone1");
-        if(! new_frame.segments.empty()){
-          int diff = millis_since_epoch - this->last_rcv_time;
-          RCLCPP_INFO(get_logger(), "Frame [%d] : x= %.4f y= %.4f z= %.4f  delta_time=%d ms buf_len=%ld",
-            millis_since_epoch, new_frame.segments[0].px, new_frame.segments[0].py, new_frame.segments[0].pz, diff, filter_buffer.size());
-          this->last_rcv_time = millis_since_epoch;
-          if(this->publish){
-            this->ros_pub(new_frame);
-            this->publish_px4_msg(new_frame.segments[0]);
-          }
-          this->publish = ! this->publish;
-        }else{
-          RCLCPP_WARN(get_logger(),"No segments :(");
+    Output_WaitForFrame WaitOutput = vicon_client.WaitForFrame();
+    if( WaitOutput.Result == Result::Success )
+    {
+      this->vicon_client.UpdateFrame();
+      int millis_since_epoch = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+      frame_info new_frame = this->get_position("drone1");
+      if(! new_frame.segments.empty()){
+        int diff = millis_since_epoch - this->last_rcv_time;
+        if (diff > 65){
+          RCLCPP_WARN(get_logger(), "Inter frame time = %d", diff);
         }
-
+        RCLCPP_INFO(get_logger(), "Frame [%d] : x= %.4f y= %.4f z= %.4f  delta_time=%d ms buf_len=%ld",
+          millis_since_epoch, new_frame.segments[0].px, new_frame.segments[0].py, new_frame.segments[0].pz, diff, filter_buffer.size());
+        this->last_rcv_time = millis_since_epoch;
+        this->ros_pub(new_frame);
+        this->publish_px4_msg(new_frame.segments[0]);
       }else{
-        RCLCPP_INFO(get_logger(),"WaitOutput.Result error :(");
+        // RCLCPP_WARN(get_logger(),"No segments :(");
+        this->vicon_rcv();
       }
+
+    }else{
+      RCLCPP_INFO(get_logger(),"WaitOutput.Result error :(");
     }
 	}
 
@@ -239,6 +244,7 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr vicon_pub_;
   rclcpp::Publisher<px4_msgs::msg::VehicleOdometry>::SharedPtr px4_pub_;
   std::list<segment_info> filter_buffer;
+  rclcpp::TimerBase::SharedPtr timer_20ms;
 };
 
 
