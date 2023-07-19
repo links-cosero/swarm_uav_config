@@ -13,6 +13,10 @@
 
 #include "px4_msgs/msg/vehicle_odometry.hpp"
 
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2_ros/transform_broadcaster.h"
+#include "geometry_msgs/msg/transform_stamped.hpp"
+
 using namespace std::chrono_literals;
 using namespace std::chrono;
 using namespace ViconDataStreamSDK::CPP;
@@ -40,10 +44,12 @@ struct frame_info{
   std::vector<segment_info> segments;
 };
 
-rclcpp::QoS pub_qos = rclcpp::QoS(10)
+rclcpp::QoS pub_qos = rclcpp::QoS(0)
 		.reliability(RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
 		.durability(RMW_QOS_POLICY_DURABILITY_VOLATILE)
 		.history(RMW_QOS_POLICY_HISTORY_KEEP_LAST);
+  
+rclcpp::QoS sensor_qos = rclcpp::SensorDataQoS();
 
 class ViconRos2_v2 : public rclcpp::Node
 {
@@ -52,12 +58,12 @@ public:
     : Node("vicon")
     {
     RCLCPP_INFO(get_logger(), "Connecting client to VICON ...");
-		Output_Connect result = this->vicon_client.Connect(vicon_tracker_ip, 50);
+		Output_Connect result = this->vicon_client.Connect(vicon_tracker_ip, 30);
     if (result.Result == Result::Success){
       RCLCPP_INFO(get_logger(), "Client successfully connected!");
     }else{
       RCLCPP_ERROR(get_logger(), "Client failed to connect!");
-      return;
+      throw -1;
     }
 
     this->vicon_client.SetAxisMapping(
@@ -65,11 +71,14 @@ public:
         Direction::Right,
         Direction::Down);
 
-    this->vicon_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/vicon/drone1", pub_qos);
-    this->px4_pub_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/fmu/in/vehicle_visual_odometry", 10);
+    this->vicon_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/vicon/drone1", sensor_qos);
+    this->px4_pub_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/fmu/in/vehicle_visual_odometry", sensor_qos);
 
     // this->vicon_thread = std::thread(bind(& ViconRos2_v2::vicon_rcv, this));
     this->timer_20ms = create_wall_timer(20ms, std::bind(& ViconRos2_v2::vicon_rcv, this));
+
+    /*TF2 setup*/
+    this->tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(this);
 
 	}
 
@@ -90,6 +99,8 @@ public:
         this->last_rcv_time = millis_since_epoch;
         this->ros_pub(new_frame);
         this->publish_px4_msg(new_frame.segments[0]);
+        this->broadcast_drone_tf(new_frame.segments[0]);
+        this->broadcast_camera_tf();
       }else{
         // RCLCPP_WARN(get_logger(),"No segments :(");
         this->vicon_rcv();
@@ -98,6 +109,37 @@ public:
     }else{
       RCLCPP_INFO(get_logger(),"WaitOutput.Result error :(");
     }
+	}
+
+  void broadcast_drone_tf(segment_info segment){
+    geometry_msgs::msg::TransformStamped t;
+    t.header.stamp = this->get_clock()->now();
+    t.header.frame_id = "map";
+    t.child_frame_id = "drone1";
+    t.transform.translation.x =  segment.px / 1000;
+    t.transform.translation.y = -segment.py / 1000;
+    t.transform.translation.z = -segment.pz / 1000;
+    t.transform.rotation.x =  segment.qx;
+    t.transform.rotation.y = -segment.qy;
+    t.transform.rotation.z = -segment.qz;
+    t.transform.rotation.w =  segment.qw;
+    this->tf_broadcaster->sendTransform(t);
+  }
+  void broadcast_camera_tf(){
+		geometry_msgs::msg::TransformStamped t;
+		tf2::Quaternion q;
+		q.setEuler(3.1415, 3.1415, 0.0);
+		t.header.stamp = this->get_clock()->now();
+		t.header.frame_id = "drone1";
+		t.child_frame_id = "camera";
+		t.transform.translation.x = 0.07;
+		t.transform.translation.y = 0.0;
+		t.transform.translation.z = 0.0;
+		t.transform.rotation.x = q.x();
+		t.transform.rotation.y = q.y();
+		t.transform.rotation.z = q.z();
+		t.transform.rotation.w = q.w();
+		this->tf_broadcaster->sendTransform(t);
 	}
 
   frame_info get_position(std::string obj_name){
@@ -245,13 +287,18 @@ private:
   rclcpp::Publisher<px4_msgs::msg::VehicleOdometry>::SharedPtr px4_pub_;
   std::list<segment_info> filter_buffer;
   rclcpp::TimerBase::SharedPtr timer_20ms;
+  std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;
 };
 
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<ViconRos2_v2>());
+  try{
+    rclcpp::spin(std::make_shared<ViconRos2_v2>());
+  }catch (int var){
+
+  };
   rclcpp::shutdown();
   return 0;
 }
