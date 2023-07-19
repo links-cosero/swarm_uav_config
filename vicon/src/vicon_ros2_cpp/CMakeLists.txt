@@ -14,6 +14,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(px4_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 # uncomment the following section in order to fill in
 # further dependencies manually.
@@ -25,11 +27,24 @@ add_executable(vicon
 target_link_libraries(vicon ViconDataStreamSDK_CPP)
 ament_target_dependencies(vicon rclcpp geometry_msgs px4_msgs)
 target_include_directories(vicon PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
   $<INSTALL_INTERFACE:include>)
 target_compile_features(vicon PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 
-install(TARGETS vicon
+################################################################################
+
+add_executable(vicon_v2
+    src/viconv2.cpp)
+
+target_link_libraries(vicon_v2 libViconDataStreamSDK_CPP.so)
+ament_target_dependencies(vicon_v2 rclcpp geometry_msgs px4_msgs tf2 tf2_ros)
+target_include_directories(vicon_v2 PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  $<INSTALL_INTERFACE:include>)
+target_compile_features(vicon_v2 PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+
+
+install(TARGETS vicon vicon_v2
   DESTINATION lib/${PROJECT_NAME})
 
 # Install launch files.
