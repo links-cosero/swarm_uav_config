@@ -71,10 +71,9 @@ public:
         Direction::Right,
         Direction::Down);
 
-    this->vicon_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/vicon/drone1", sensor_qos);
-    this->px4_pub_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/fmu/in/vehicle_visual_odometry", sensor_qos);
+    this->px4_pub1_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/drone1/fmu/in/vehicle_visual_odometry", sensor_qos);
+    this->px4_pub2_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/drone2/fmu/in/vehicle_visual_odometry", sensor_qos);
 
-    // this->vicon_thread = std::thread(bind(& ViconRos2_v2::vicon_rcv, this));
     this->timer_20ms = create_wall_timer(20ms, std::bind(& ViconRos2_v2::vicon_rcv, this));
 
     /*TF2 setup*/
@@ -88,23 +87,32 @@ public:
     {
       this->vicon_client.UpdateFrame();
       int millis_since_epoch = duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
-      frame_info new_frame = this->get_position("drone1");
-      if(! new_frame.segments.empty()){
-        int diff = millis_since_epoch - this->last_rcv_time;
-        if (diff > 65){
-          RCLCPP_WARN(get_logger(), "Inter frame time = %d", diff);
+      int diff = millis_since_epoch - this->last_rcv_time;
+      
+      /*Scan all objects and publish under the correct name*/
+      Output_GetSubjectCount sub_cnt = this->vicon_client.GetSubjectCount();
+      for(int i = 0; i<int(sub_cnt.SubjectCount); i++){
+        Output_GetSubjectName name = this->vicon_client.GetSubjectName(i);
+      
+        frame_info new_frame = this->get_position(name.SubjectName);
+        if(! new_frame.segments.empty()){
+          RCLCPP_INFO(get_logger(), "Frame [%d] : x= %.4f y= %.4f z= %.4f  delta_time=%d ms buf_len=%ld",
+            millis_since_epoch, new_frame.segments[0].px, new_frame.segments[0].py, new_frame.segments[0].pz, diff, filter_buffer.size());
+          
+          this->publish_px4_msg(new_frame.segments[0]);
+
+          /* Enable TF publishers if needed */
+          // this->broadcast_drone_tf(new_frame.segments[0]);
+          // this->broadcast_camera_tf("/" + new_frame.segments[0].object_name);
+        }else{
+          this->vicon_rcv();
         }
-        RCLCPP_INFO(get_logger(), "Frame [%d] : x= %.4f y= %.4f z= %.4f  delta_time=%d ms buf_len=%ld",
-          millis_since_epoch, new_frame.segments[0].px, new_frame.segments[0].py, new_frame.segments[0].pz, diff, filter_buffer.size());
-        this->last_rcv_time = millis_since_epoch;
-        this->ros_pub(new_frame);
-        this->publish_px4_msg(new_frame.segments[0]);
-        this->broadcast_drone_tf(new_frame.segments[0]);
-        this->broadcast_camera_tf();
-      }else{
-        // RCLCPP_WARN(get_logger(),"No segments :(");
-        this->vicon_rcv();
       }
+      if (diff > 65){
+        RCLCPP_WARN(get_logger(), "Inter frame time = %d", diff);
+      }
+      this->last_rcv_time = millis_since_epoch;
+      
 
     }else{
       RCLCPP_INFO(get_logger(),"WaitOutput.Result error :(");
@@ -115,7 +123,7 @@ public:
     geometry_msgs::msg::TransformStamped t;
     t.header.stamp = this->get_clock()->now();
     t.header.frame_id = "map";
-    t.child_frame_id = "drone1";
+    t.child_frame_id = "/" + segment.object_name;
     t.transform.translation.x =  segment.px / 1000;
     t.transform.translation.y = -segment.py / 1000;
     t.transform.translation.z = -segment.pz / 1000;
@@ -125,13 +133,14 @@ public:
     t.transform.rotation.w =  segment.qw;
     this->tf_broadcaster->sendTransform(t);
   }
-  void broadcast_camera_tf(){
+  
+  void broadcast_camera_tf(std::string drone_name){
 		geometry_msgs::msg::TransformStamped t;
 		tf2::Quaternion q;
 		q.setEuler(3.1415, 3.1415, 0.0);
 		t.header.stamp = this->get_clock()->now();
-		t.header.frame_id = "drone1";
-		t.child_frame_id = "camera";
+		t.header.frame_id = drone_name;
+		t.child_frame_id = drone_name + "/camera";
 		t.transform.translation.x = 0.07;
 		t.transform.translation.y = 0.0;
 		t.transform.translation.z = 0.0;
@@ -274,7 +283,9 @@ public:
       segment.qz        
     };
     new_msg.position_variance = {0.001, 0.001, 0.001};
-    this->px4_pub_->publish(new_msg);
+
+    if (segment.object_name == "drone1") this->px4_pub1_->publish(new_msg);
+    if (segment.object_name == "drone2") this->px4_pub2_->publish(new_msg);
   }
 
 private:
@@ -284,7 +295,8 @@ private:
   std::thread vicon_thread;
   bool publish = 0;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr vicon_pub_;
-  rclcpp::Publisher<px4_msgs::msg::VehicleOdometry>::SharedPtr px4_pub_;
+  rclcpp::Publisher<px4_msgs::msg::VehicleOdometry>::SharedPtr px4_pub1_;
+  rclcpp::Publisher<px4_msgs::msg::VehicleOdometry>::SharedPtr px4_pub2_;
   std::list<segment_info> filter_buffer;
   rclcpp::TimerBase::SharedPtr timer_20ms;
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;
