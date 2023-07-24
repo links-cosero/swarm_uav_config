@@ -1,5 +1,29 @@
 # VICON Motion Capture
 
+Tramite l'SDK fornito da Vicon si è costruito un nodo ROS 2 the legge le informazioni sulla posizione degli oggetti e li pubblica su un topic. L'SDK è stato scompattato nella cartella `./src/vicon_ros2_cpp/include`
+
+Per fare correttamente la compilazione dell'eseguibile ROS 2 specificare in CMakeLists di fare il link con la libreria ViconSDK
+```
+add_executable(vicon_v2
+    src/viconv2.cpp)
+
+target_link_libraries(vicon_v2 libViconDataStreamSDK_CPP.so)
+ament_target_dependencies(vicon_v2 rclcpp geometry_msgs px4_msgs tf2 tf2_ros)
+target_include_directories(vicon_v2 PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  $<INSTALL_INTERFACE:include>)
+target_compile_features(vicon_v2 PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+
+```
+Per eseguire il nodo utilizzare il comando:
+```bash
+source install/local_setup.bash
+ros2 run vicon_ros2_cpp vicon_v2
+```
+il nodo `vicon_v2` utilizza la classe `ViconDataStreamSDK::CPP::RetimingClient` che ha performance nettamente superiori in termini di frequenza costante dei  campioni rispetto al client di base `ViconDataStreamSDK::CPP::Client` utilizzato nel nodo `vicon`. Il nodo `vicon_v2` ha una frequenza più precisa ma presenta alcuni outliers nelle misure fornite: vengono filtrare dal filtro EKF2 di PX4 e non presentano alcun problema. 
+
+# Pyvicon_datastream (non utilizzato)
+
 Il systema vicon viene utilizzato per ricevere informazioni sulla posizione e orientamento dei vari oggetti all'interno della gabbia. I dati vengono estratti utilizzando un [wrapper python](https://pypi.org/project/pyvicon-datastream/) dell'SDK originale in CPP. 
 In questa libreria non tutte le funzioni sono state tradotte in python, solamente le principali. La reference delle funzioni è la stessa della classe in CPP. 
 
