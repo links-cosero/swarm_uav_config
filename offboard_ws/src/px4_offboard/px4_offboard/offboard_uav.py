@@ -35,7 +35,7 @@ class OffboardControl(Node):
         # Stato missione per macchina a stati
         self.mission_state = 0
         # Waypoint corrente pubblicato da timer_offboard_cb()
-        self.current_waypoint = [0.0, 0.0, -1.0]
+        self.current_waypoint = [0.0, 0.0, 0.0]
 
         # Timers
         self.timer_offboard = self.create_timer(0.1, self.timer_offboard_cb)
@@ -71,7 +71,7 @@ class OffboardControl(Node):
             # Imposta il primo waypoint
             self.get_logger().info("First waypoint")
             self.current_waypoint = [0.0, 0.0, -5.0]
-            self.mission_state = 2
+            self.mission_state = 3
 
         elif self.mission_state == 2:
             """Waypoint 2"""

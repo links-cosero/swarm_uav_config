@@ -27,6 +27,7 @@ setup(
     entry_points={
         'console_scripts': [
                 'offboard_uav = px4_offboard.offboard_uav:main',
+                'cpp_uav = px4_offboard.cpp_uav:main',
                 'offboard_uav2 = px4_offboard.offboard_uav2:main',
                 'offboard_arming = px4_offboard.offboard_arming:main'
         ],
