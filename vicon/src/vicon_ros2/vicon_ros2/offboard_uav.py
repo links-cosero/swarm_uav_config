@@ -34,9 +34,9 @@ from rclpy.qos import (
     QoSDurabilityPolicy)
 
 qos_profile = QoSProfile(
-            reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
-            durability=QoSDurabilityPolicy.RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
-            history=QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+            history=QoSHistoryPolicy.KEEP_LAST,
             depth=1
         )
 
@@ -111,23 +111,16 @@ class OffboardControl(Node):
             else:
                 self.get_logger().info("Vehicle armed")
                 # Imposta il primo waypoint
-                self.get_logger().info("First waypoint")
-                self.current_waypoint = [0.0, 0.0, -0.5]
+                self.get_logger().info("First waypoint x=0 y=0 z=-0.3")
+                self.current_waypoint = [0.0, 0.0, -0.3]
                 self.mission_state = 2
 
         elif self.mission_state == 2:
             """Waypoint 2"""
-            self.get_logger().info("Second waypoint")
+            self.get_logger().info("Second waypoint x=0 y=1 z=-0.5")
             # Imposta secondo waypoint
-            self.current_waypoint = [0.0, 1.0, -1.0]
+            self.current_waypoint = [0.0, 1.0, -0.5]
             self.mission_state = 3
-        
-        # elif self.mission_state == 5:
-        #     """Waypoint 2"""
-        #     self.get_logger().info("Second waypoint")
-        #     # Imposta secondo waypoint
-        #     self.current_waypoint = [0.0, 0.0, 1.0]
-        #     self.mission_state = 3
 
         elif self.mission_state == 3:
             """Landing"""
@@ -142,7 +135,7 @@ class OffboardControl(Node):
             exit()        
     
     def timer_offboard_cb(self):
-        # Funzione richiamata ogni 20ms e invia i seguenti messaggi
+        # Funzione richiamata ogni 10ms e invia i seguenti messaggi
         self.publish_offboard_control_mode()
         self.publish_trajectory_setpoint()
 
@@ -180,7 +173,7 @@ class OffboardControl(Node):
 
     def publish_trajectory_setpoint(self):
         msg = TrajectorySetpoint()
-        msg.position = self.current_waypoint# [0.0, 0.0, -5.0] 
+        msg.position = self.current_waypoint
         msg.yaw = 0.0  # [-PI:PI]
         msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
         
