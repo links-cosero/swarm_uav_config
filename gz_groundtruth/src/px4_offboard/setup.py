@@ -28,7 +28,8 @@ setup(
         'console_scripts': [
                 'offboard_control = px4_offboard.offboard_control:main',
                 'visualizer = px4_offboard.visualizer:main',
-                'offboard_uav = px4_offboard.offboard_uav:main'
+                'offboard_uav = px4_offboard.offboard_uav:main',
+                'offboard_control_official = px4_offboard.offboard_control_official:main'
         ],
     },
 )

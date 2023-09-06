@@ -21,15 +21,18 @@ setup(
     zip_safe=True,
     maintainer='ronald/davide',
     maintainer_email='test@gmail.com',
-    description='TODO: Package description',
+    description='Package to run several tests using one drone and two drone respectively',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-                'offboard_uav = px4_offboard.offboard_uav:main',
-                'cpp_uav = px4_offboard.cpp_uav:main',
-                'offboard_uav2 = px4_offboard.offboard_uav2:main',
-                'offboard_arming = px4_offboard.offboard_arming:main'
+                'visualizer = px4_offboard.visualizer:main',
+                'visualizer2 = px4_offboard.visualizer2:main',
+                'offboard_uav_test1 = px4_offboard.offboard_uav_test1:main',
+                'offboard_uav_test2 = px4_offboard.offboard_uav_test2:main',
+                'offboard_uav2_test = px4_offboard.offboard_uav2_test:main',
+                'offboard_arming_altitude = px4_offboard.offboard_arming_altitude:main',      
+                'offboard_uav_fake_mocap = px4_offboard.offboard_uav_fake_mocap:main',   
         ],
     },
 )

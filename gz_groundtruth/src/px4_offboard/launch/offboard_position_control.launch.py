@@ -62,11 +62,5 @@ def generate_launch_description():
             executable='rviz2',
             name='rviz2',
             arguments=['-d', [os.path.join(package_dir, 'visualize.rviz')]]
-        ),
-        Node(
-            package='motion_capture',
-            namespace='motion_capture',
-            executable='mocap_node_garden',
-            name='mocap'
         )
     ])

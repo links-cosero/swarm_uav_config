@@ -30,7 +30,7 @@ make px4_sitl gz_x500
 ```python
 cd ~/path_to_repo/uav_config/gz_groundtruth
 source install/local_setup.bash
-ros2 launch px4_offboard offboard_position_control.launch.py
+ros2 launch px4_offboard offboard_control_groundtruth.launch.py
 ```
 
 Sarà infine necessario impostare il drone in modalità offboard e armarlo (e.g. da QGroundControl)
@@ -45,15 +45,13 @@ Per provare la differenza con e senza invio dei messaggi di visual_odometry comm
 
 All’interno dell’ambiente gazebo sono presenti dei topic (non visualizzabili da ROS) e vogliamo copiare il contenuto del topic  `/world/default/pose/info`  su un topic visualizzabile da ROS. Questo topic contiene le informazioni sulla posizione di tutti gli oggetti nella simulazione Gazebo: in particolare noi saremo interessati al **secondo elemento del vettore restituito** in quanto rappresenta la posizione del drone. N.B. ho trovato che è il secondo elemento in modo sperimentale guardando i dati che dava in output. 
 
-Per visualizzare i topic di Gazebo avremmo bisogno di `ignition-tools`:
+Per visualizzare i topic di Gazebo:
 
-```bash
-sudo apt install ignition-tools
-# Per visualizzare tutti i topic disponibili
-ign topic -l
+```
+gz topic -l
 ```
 
-Il collegamento con ROS sarà gestito da `ros_gz_bridge` :  questo pacchetto installato con apt non funziona, nella pagina [github](https://github.com/gazebosim/ros_gz) viene infatti specificato che per la combinazione ROS2 Humble e Gazebo Garden esso va compilato con colcon. 
+Il collegamento con ROS2 sarà gestito da `ros_gz_bridge` :  questo pacchetto installato con apt non funziona, nella pagina [github](https://github.com/gazebosim/ros_gz) viene infatti specificato che per la combinazione ROS2 Humble e Gazebo Garden esso va compilato con colcon e scaricato il branch humble. 
 
 Esso va inserito come package nel workspace dove viene utilizzato, altrimenti non funziona sempre (provato sperimentalmente). **N.B. Nella presente repository il workspace ha già all’interno tutti i package necessari, quindi i passi seguenti sono un tutorial solo per costruire un eventuale nuovo workspace.** 
 
@@ -63,7 +61,7 @@ Per scaricare la repository nel workspace:
 mkdir -p ~/workspace/src
 cd ~/workspace/src
 export GZ_VERSION=garden
-git clone https://github.com/gazebosim/ros_gz.git -b ros2
+git clone https://github.com/gazebosim/ros_gz.git -b humble
 ```
 
 Installare le dependencies (installare rosdep se non presente)
