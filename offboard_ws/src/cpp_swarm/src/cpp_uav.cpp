@@ -91,7 +91,18 @@ void OffboardControl::mission_cb()
         current_waypoint = {-2.5,-2.5,2.0};
 		current_waypoint = ENU2NED_vector_converter(current_waypoint);
 		mission_state = 2;
-    }
+    }else if (mission_state == 2)
+	{
+		RCLCPP_INFO(this->get_logger(), "Landing");
+		this->publish_vehicle_command(VehicleCommand::VEHICLE_CMD_NAV_LAND);
+		mission_state = 3;
+	}else if (mission_state == 3)
+	{
+		RCLCPP_INFO(this->get_logger(), "Mission finished");
+		timer_offboard->cancel();
+		timer_mission->cancel();
+		exit(1);
+	}
 }
 
 /**
