@@ -45,15 +45,15 @@ class OffboardControl(Node):
 
     def __init__(self):
         super().__init__('OffboardControl')
-        self.offboard_control_mode_publisher_ = self.create_publisher(OffboardControlMode,"/fmu/in/offboard_control_mode", 10)
-        self.trajectory_setpoint_publisher_ = self.create_publisher(TrajectorySetpoint,"/fmu/in/trajectory_setpoint", 10)
-        self.vehicle_command_publisher_ = self.create_publisher(VehicleCommand,"/fmu/in/vehicle_command", 10)
-        self.vehicle_status = self.create_subscription(VehicleStatus, "/fmu/out/vehicle_status", self.v_status_cb, qos_profile)
+        self.offboard_control_mode_publisher_ = self.create_publisher(OffboardControlMode,"/drone2/fmu/in/offboard_control_mode", 10)
+        self.trajectory_setpoint_publisher_ = self.create_publisher(TrajectorySetpoint,"/drone2/fmu/in/trajectory_setpoint", 10)
+        self.vehicle_command_publisher_ = self.create_publisher(VehicleCommand,"/drone2/fmu/in/vehicle_command", 10)
+        self.vehicle_status = self.create_subscription(VehicleStatus, "/drone2/fmu/out/vehicle_status", self.v_status_cb, qos_profile)
         self.vehicle_status_msg = None
 
         self.offboard_setpoint_counter_ = 0
         # Stato missione per macchina a stati
-        self.mission_state = -1
+        self.mission_state = 0
         # Waypoint corrente pubblicato da timer_offboard_cb()
         self.current_waypoint = [0.0, 0.0, 0.0]
 
@@ -82,27 +82,24 @@ class OffboardControl(Node):
             return
 
         
-        if self.mission_state == -1:
-            if not self.vehicle_status_msg.nav_state == VehicleStatus.NAVIGATION_STATE_STAB:
-                self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1., 7.)
-                self.mission_state = -1
-            else:
-                self.mission_state = 0
+        # if self.mission_state == -1:
+        #     if not self.vehicle_status_msg.nav_state == VehicleStatus.NAVIGATION_STATE_STAB:
+        #         self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1., 7.)
+        #         self.mission_state = -1
+        #     else:
+        #         self.mission_state = 0
 
 
-        elif self.mission_state == 0:
+        if self.mission_state == 0:
             """ Arming and takeoff to 1st waypoint """
-            if self.vehicle_status_msg.pre_flight_checks_pass:
-                
-                if not self.vehicle_status_msg.nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD:
-                    self.get_logger().info("Mission started")
-                    self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1., 6.)
-                    self.mission_state = 0
-                else:
+            if not self.vehicle_status_msg.nav_state == VehicleStatus.NAVIGATION_STATE_OFFBOARD:
+                self.get_logger().info("Mission started")
+                self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1., 6.)
+                self.mission_state = 0
+            else:
+                if self.vehicle_status_msg.pre_flight_checks_pass:
                     self.mission_state = 1                    
            
-            else:
-                self.mission_state = 0
 
         elif self.mission_state == 1:    
             if not self.vehicle_status_msg.arming_state == VehicleStatus.ARMING_STATE_ARMED:
@@ -119,7 +116,7 @@ class OffboardControl(Node):
             """Waypoint 2"""
             self.get_logger().info("Second waypoint x=0 y=1 z=-0.5")
             # Imposta secondo waypoint
-            self.current_waypoint = [0.0, 1.0, -0.5]
+            self.current_waypoint = [0.0, 0.0, -1.0]
             self.mission_state = 3
 
         elif self.mission_state == 3:

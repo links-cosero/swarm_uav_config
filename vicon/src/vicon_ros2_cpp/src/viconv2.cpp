@@ -71,8 +71,8 @@ public:
         Direction::Right,
         Direction::Down);
 
-    this->px4_pub1_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/drone1/fmu/in/vehicle_visual_odometry", sensor_qos);
-    this->px4_pub2_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/drone2/fmu/in/vehicle_visual_odometry", sensor_qos);
+    this->px4_pub1_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/drone2/fmu/in/vehicle_visual_odometry", sensor_qos);
+    this->px4_pub2_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/drone3/fmu/in/vehicle_visual_odometry", sensor_qos);
 
     this->timer_20ms = create_wall_timer(20ms, std::bind(& ViconRos2_v2::vicon_rcv, this));
 
