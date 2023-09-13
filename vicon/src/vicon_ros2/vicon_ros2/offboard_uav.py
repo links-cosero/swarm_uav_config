@@ -45,10 +45,10 @@ class OffboardControl(Node):
 
     def __init__(self):
         super().__init__('OffboardControl')
-        self.offboard_control_mode_publisher_ = self.create_publisher(OffboardControlMode,"/drone2/fmu/in/offboard_control_mode", 10)
-        self.trajectory_setpoint_publisher_ = self.create_publisher(TrajectorySetpoint,"/drone2/fmu/in/trajectory_setpoint", 10)
-        self.vehicle_command_publisher_ = self.create_publisher(VehicleCommand,"/drone2/fmu/in/vehicle_command", 10)
-        self.vehicle_status = self.create_subscription(VehicleStatus, "/drone2/fmu/out/vehicle_status", self.v_status_cb, qos_profile)
+        self.offboard_control_mode_publisher_ = self.create_publisher(OffboardControlMode,"/drone3/fmu/in/offboard_control_mode", 10)
+        self.trajectory_setpoint_publisher_ = self.create_publisher(TrajectorySetpoint,"/drone3/fmu/in/trajectory_setpoint", 10)
+        self.vehicle_command_publisher_ = self.create_publisher(VehicleCommand,"/drone3/fmu/in/vehicle_command", 10)
+        self.vehicle_status = self.create_subscription(VehicleStatus, "/drone3/fmu/out/vehicle_status", self.v_status_cb, qos_profile)
         self.vehicle_status_msg = None
 
         self.offboard_setpoint_counter_ = 0

@@ -71,8 +71,9 @@ public:
         Direction::Right,
         Direction::Down);
 
-    this->px4_pub1_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/drone2/fmu/in/vehicle_visual_odometry", sensor_qos);
-    this->px4_pub2_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/drone3/fmu/in/vehicle_visual_odometry", sensor_qos);
+    this->px4_pub2_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/drone2/fmu/in/vehicle_visual_odometry", sensor_qos);
+    this->px4_pub3_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/drone3/fmu/in/vehicle_visual_odometry", sensor_qos);
+    this->px4_pub4_ = this->create_publisher<px4_msgs::msg::VehicleOdometry>("/drone4/fmu/in/vehicle_visual_odometry", sensor_qos);
 
     this->timer_20ms = create_wall_timer(20ms, std::bind(& ViconRos2_v2::vicon_rcv, this));
 
@@ -284,8 +285,9 @@ public:
     };
     new_msg.position_variance = {0.001, 0.001, 0.001};
 
-    if (segment.object_name == "drone1") this->px4_pub1_->publish(new_msg);
     if (segment.object_name == "drone2") this->px4_pub2_->publish(new_msg);
+    if (segment.object_name == "drone3") this->px4_pub3_->publish(new_msg);
+    if (segment.object_name == "drone4") this->px4_pub4_->publish(new_msg);
   }
 
 private:
@@ -295,8 +297,7 @@ private:
   std::thread vicon_thread;
   bool publish = 0;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr vicon_pub_;
-  rclcpp::Publisher<px4_msgs::msg::VehicleOdometry>::SharedPtr px4_pub1_;
-  rclcpp::Publisher<px4_msgs::msg::VehicleOdometry>::SharedPtr px4_pub2_;
+  rclcpp::Publisher<px4_msgs::msg::VehicleOdometry>::SharedPtr px4_pub2_, px4_pub3_, px4_pub4_;
   std::list<segment_info> filter_buffer;
   rclcpp::TimerBase::SharedPtr timer_20ms;
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;
