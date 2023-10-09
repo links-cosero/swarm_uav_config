@@ -32,7 +32,9 @@ setup(
                 'offboard_uav_test2 = px4_offboard.offboard_uav_test2:main',
                 'offboard_uav2_test = px4_offboard.offboard_uav2_test:main',
                 'offboard_arming_altitude = px4_offboard.offboard_arming_altitude:main',      
-                'offboard_uav_fake_mocap = px4_offboard.offboard_uav_fake_mocap:main',   
+                'offboard_uav_fake_mocap = px4_offboard.offboard_uav_fake_mocap:main', 
+                'cpp_uav_base = px4_offboard.cpp_uav_base:main',
+                'cpp_uav_real_sim = px4_offboard.offboard_uav_fake_mocap:main',    
         ],
     },
 )

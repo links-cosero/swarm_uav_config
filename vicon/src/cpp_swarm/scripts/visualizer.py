@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ############################################################################
 #
 #   Copyright (C) 2022 PX4 Development Team. All rights reserved.
@@ -58,9 +58,9 @@ def vector2PoseMsg(frame_id, position, attitude):
     pose_msg.pose.orientation.x = attitude[1]
     pose_msg.pose.orientation.y = attitude[2]
     pose_msg.pose.orientation.z = attitude[3]
-    pose_msg.pose.position.x = position[0]
-    pose_msg.pose.position.y = position[1]
-    pose_msg.pose.position.z = position[2]
+    pose_msg.pose.position.x = float(position[0])
+    pose_msg.pose.position.y = float(position[1])
+    pose_msg.pose.position.z = float(position[2])
     return pose_msg
 
 class PX4Visualizer(Node):
@@ -105,19 +105,16 @@ class PX4Visualizer(Node):
         timer_period = 0.05  # seconds
         self.timer = self.create_timer(timer_period, self.cmdloop_callback)
    
-    def ENU2NED_vector_converter(self, position):
-
-        # Rotation around Z-axis of 90° Degrees
-        rotZ = np.asfarray(np.array([[np.cos(np.pi/2), -np.sin(np.pi/2), 0],
-                                    [np.sin(np.pi/2), np.cos(np.pi/2), 0], 
-                                    [0, 0, 1]]), dtype = np.float32)
-        position = np.dot(rotZ, position)
+    def FRD2FLU_vector_converter(self, position):
 
         # Rotation around X-axis of 180° Degrees
         rotX = np.asfarray(np.array([[1, 0, 0],
                                     [0, np.cos(np.pi), -np.sin(np.pi)], 
                                     [0, np.sin(np.pi), np.cos(np.pi)]]), dtype = np.float32)
+        
         position = np.dot(rotX, position)
+
+        return position
 
     def vehicle_attitude_callback(self, msg):
         # TODO: handle NED->ENU transformation 
@@ -132,7 +129,7 @@ class PX4Visualizer(Node):
         self.vehicle_local_position[1] = msg.y
         self.vehicle_local_position[2] = msg.z
         
-        self.vehicle_local_position = self.ENU2NED_vector_converter(self.vehicle_local_position)
+        self.vehicle_local_position = self.FRD2FLU_vector_converter(self.vehicle_local_position)
         
         self.vehicle_local_velocity[0] = msg.vx
         self.vehicle_local_velocity[1] = -msg.vy
@@ -144,7 +141,7 @@ class PX4Visualizer(Node):
         self.setpoint_position[1] = msg.position[1]
         self.setpoint_position[2] = msg.position[2]
         
-        self.setpoint_position = self.ENU2NED_vector_converter(self.setpoint_position)
+        self.setpoint_position = self.FRD2FLU_vector_converter(self.setpoint_position)
         
         
 
@@ -165,9 +162,9 @@ class PX4Visualizer(Node):
         msg.color.a = 1.0
         dt = 0.3
         tail_point = Point()
-        tail_point.x = tail[0]
-        tail_point.y = tail[1]
-        tail_point.z = tail[2]
+        tail_point.x = float(tail[0])
+        tail_point.y = float(tail[1])
+        tail_point.z = float(tail[2])
         head_point = Point()
         head_point.x = tail[0] + dt * vector[0]
         head_point.y = tail[1] + dt * vector[1]

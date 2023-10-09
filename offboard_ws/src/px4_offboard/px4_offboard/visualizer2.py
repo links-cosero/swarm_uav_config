@@ -78,34 +78,34 @@ class PX4Visualizer(Node):
         #SUBSCRIPTION FIRST DRONE
         self.attitude1_sub = self.create_subscription(
             VehicleAttitude,
-            '/px4_1/fmu/out/vehicle_attitude',
+            '/drone_1/fmu/out/vehicle_attitude',
             self.vehicle1_attitude_callback,
             qos_profile)
         self.local_position1_sub = self.create_subscription(
             VehicleLocalPosition,
-            '/px4_1/fmu/out/vehicle_local_position',
+            '/drone_1/fmu/out/vehicle_local_position',
             self.vehicle1_local_position_callback,
             qos_profile)
         self.setpoint1_sub = self.create_subscription(
             TrajectorySetpoint,
-            '/px4_1/fmu/in/trajectory_setpoint',
+            '/drone_1/fmu/in/trajectory_setpoint',
             self.trajectory1_setpoint_callback,
             qos_profile)
             
 	    # SUBSCRIPTIONS SECOND DRONE
         self.attitude2_sub = self.create_subscription(
             VehicleAttitude,
-            '/fmu/out/vehicle_attitude',
+            '/drone_2/fmu/out/vehicle_attitude',
             self.vehicle2_attitude_callback,
             qos_profile)
         self.local_position2_sub = self.create_subscription(
             VehicleLocalPosition,
-            '/fmu/out/vehicle_local_position',
+            '/drone_2/fmu/out/vehicle_local_position',
             self.vehicle2_local_position_callback,
             qos_profile)
         self.setpoint2_sub = self.create_subscription(
             TrajectorySetpoint,
-            '/fmu/in/trajectory_setpoint',
+            '/drone_2/fmu/in/trajectory_setpoint',
             self.trajectory2_setpoint_callback,
             qos_profile)
 
@@ -137,6 +137,16 @@ class PX4Visualizer(Node):
        
         timer_period = 0.05  # seconds
         self.timer = self.create_timer(timer_period, self.cmdloop_callback)
+    
+    def FRD2FLU_vector_converter(self, position):
+
+        # Rotation around X-axis of 180° Degrees
+        rotX = np.asfarray(np.array([[1, 0, 0],
+                                    [0, np.cos(np.pi), -np.sin(np.pi)], 
+                                    [0, np.sin(np.pi), np.cos(np.pi)]]), dtype = np.float32)
+        position = np.dot(rotX, position)
+
+        return position
 
     def vehicle1_attitude_callback(self, msg):
         # TODO: handle NED->ENU transformation 
@@ -146,18 +156,23 @@ class PX4Visualizer(Node):
         self.vehicle1_attitude[3] = -msg.q[3]
 
     def vehicle1_local_position_callback(self, msg):
-        # TODO: handle NED->ENU transformation 
+
         self.vehicle1_local_position[0] = msg.x
-        self.vehicle1_local_position[1] = -msg.y
-        self.vehicle1_local_position[2] = -msg.z
+        self.vehicle1_local_position[1] = msg.y
+        self.vehicle1_local_position[2] = msg.z
         self.vehicle1_local_velocity[0] = msg.vx
         self.vehicle1_local_velocity[1] = -msg.vy
         self.vehicle1_local_velocity[2] = -msg.vz
 
+        self.vehicle1_local_position = self.FRD2FLU_vector_converter(self.vehicle1_local_position)
+
     def trajectory1_setpoint_callback(self, msg):
         self.setpoint1_position[0] = msg.position[0]
-        self.setpoint1_position[1] = -msg.position[1]
-        self.setpoint1_position[2] = -msg.position[2]
+        self.setpoint1_position[1] = msg.position[1]
+        self.setpoint1_position[2] = msg.position[2]
+
+        self.setpoint1_position = self.FRD2FLU_vector_converter(self.setpoint1_position)
+
         
     def vehicle2_attitude_callback(self, msg):
         # TODO: handle NED->ENU transformation 
@@ -166,19 +181,26 @@ class PX4Visualizer(Node):
         self.vehicle2_attitude[2] = -msg.q[2]
         self.vehicle2_attitude[3] = -msg.q[3]
 
+
     def vehicle2_local_position_callback(self, msg):
         # TODO: handle NED->ENU transformation 
         self.vehicle2_local_position[0] = msg.x
-        self.vehicle2_local_position[1] = -msg.y
-        self.vehicle2_local_position[2] = -msg.z
+        self.vehicle2_local_position[1] = msg.y
+        self.vehicle2_local_position[2] = msg.z
         self.vehicle2_local_velocity[0] = msg.vx
         self.vehicle2_local_velocity[1] = -msg.vy
         self.vehicle2_local_velocity[2] = -msg.vz
 
+        self.vehicle2_local_position = self.FRD2FLU_vector_converter(self.vehicle2_local_position)
+
+
     def trajectory2_setpoint_callback(self, msg):
         self.setpoint1_position[0] = msg.position[0]
-        self.setpoint1_position[1] = -msg.position[1]
-        self.setpoint1_position[2] = -msg.position[2]
+        self.setpoint1_position[1] = msg.position[1]
+        self.setpoint1_position[2] = msg.position[2]
+
+        self.setpoint2_position = self.FRD2FLU_vector_converter(self.setpoint2_position)
+
 
     def create_arrow_marker(self, id, tail, vector):
         msg = Marker()

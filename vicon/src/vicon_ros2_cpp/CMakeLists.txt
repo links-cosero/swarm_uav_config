@@ -21,8 +21,7 @@ find_package(tf2_ros REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-add_executable(vicon 
-    src/vicon.cpp)
+add_executable(vicon src/vicon.cpp)
 
 target_link_libraries(vicon ViconDataStreamSDK_CPP)
 ament_target_dependencies(vicon rclcpp geometry_msgs px4_msgs)
@@ -33,8 +32,7 @@ target_compile_features(vicon PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++
 
 ################################################################################
 
-add_executable(vicon_v2
-    src/viconv2.cpp)
+add_executable(vicon_v2 src/viconv2.cpp)
 
 target_link_libraries(vicon_v2 libViconDataStreamSDK_CPP.so)
 ament_target_dependencies(vicon_v2 rclcpp geometry_msgs px4_msgs tf2 tf2_ros)

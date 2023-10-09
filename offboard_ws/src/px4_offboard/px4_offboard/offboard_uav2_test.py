@@ -22,23 +22,28 @@ class OffboardControl(Node):
     def __init__(self):
         super().__init__('OffboardControl')
         
-        self.offboard_control_mode_publisher_1 = self.create_publisher(OffboardControlMode,"/px4_1/fmu/in/offboard_control_mode", 10)
-        self.trajectory_setpoint_publisher_1 = self.create_publisher(TrajectorySetpoint,"/px4_1/fmu/in/trajectory_setpoint", 10)
-	# Publish the offboard control mode
-        self.offboard_control_mode_publisher_2 = self.create_publisher(OffboardControlMode,"/fmu/in/offboard_control_mode", 10)
-        self.trajectory_setpoint_publisher_2 = self.create_publisher(TrajectorySetpoint,"/fmu/in/trajectory_setpoint", 10)
-        self.vehicle_command_publisher_1 = self.create_publisher(VehicleCommand,"/px4_1/fmu/in/vehicle_command", 10)
-        self.vehicle_command_publisher_2 = self.create_publisher(VehicleCommand,"/fmu/in/vehicle_command", 10)
+        self.offboard_control_mode_publisher_1 = self.create_publisher(OffboardControlMode,"/drone_1/fmu/in/offboard_control_mode", 10)
+        self.trajectory_setpoint_publisher_1 = self.create_publisher(TrajectorySetpoint,"/drone_1/fmu/in/trajectory_setpoint", 10)
+	
+        self.offboard_control_mode_publisher_2 = self.create_publisher(OffboardControlMode,"/drone_2/fmu/in/offboard_control_mode", 10)
+        self.trajectory_setpoint_publisher_2 = self.create_publisher(TrajectorySetpoint,"/drone_2/fmu/in/trajectory_setpoint", 10)
+        
+        self.vehicle_command_publisher_1 = self.create_publisher(VehicleCommand,"/drone_1/fmu/in/vehicle_command", 10)
+        self.vehicle_command_publisher_2 = self.create_publisher(VehicleCommand,"/drone_2/fmu/in/vehicle_command", 10)
 
-        self.offboard_setpoint_counter_ = 0
         # Stato missione per macchina a stati
         self.mission_state = 0
         # Waypoint corrente pubblicato da timer_offboard_cb()
-        self.current_waypoint = [0.0, 0.0, -5.0]
+        
+        # Coordinates in FLU frame of reference x = forward, y = left, z = up
+        self.drone1_waypoint = np.asfarray([0.0, -3.0, 0.0], dtype = np.float32)
+        self.drone2_waypoint = np.asfarray([0.0, -6.0, 0.0], dtype = np.float32)
+        self.FLU2FRD_vector_converter()
+        
 
         # Timers
-        self.timer_offboard = self.create_timer(0.02, self.timer_offboard_cb)
-        self.timer_mission = self.create_timer(15, self.mission)
+        self.timer_offboard = self.create_timer(0.2, self.timer_offboard_cb)
+        self.timer_mission = self.create_timer(8, self.mission)
 
          
     
@@ -52,17 +57,25 @@ class OffboardControl(Node):
             self.publish_vehicle_command_2(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1., 6.)
             self.arm()
             self.get_logger().info("Vehicle armed")
-	# Publish the offboard control mode.
+	
             # Imposta il primo waypoint
             self.get_logger().info("First waypoint")
-            self.current_waypoint = [0.0, 0.0, -5.0]
+            self.drone1_waypoint = np.asfarray([0.0, -3.0, 5.0], dtype = np.float32)
+            self.drone2_waypoint = np.asfarray([0.0, -6.0, 5.0], dtype = np.float32)
+            self.FLU2FRD_vector_converter()
+            print(self.drone1_waypoint)
+            print(self.drone2_waypoint)
+
             self.mission_state = 1
 
         elif self.mission_state == 1:
             """Waypoint 2"""
             self.get_logger().info("Second waypoint")
             # Imposta secondo waypoint
-            self.current_waypoint = [2.0, 2.0, -4.0]
+            self.drone1_waypoint = np.asfarray([2.0, -3.0, 5.0], dtype = np.float32)
+            self.drone2_waypoint = np.asfarray([-2.0, -6.0, 5.0], dtype = np.float32)
+            self.FLU2FRD_vector_converter()
+
             self.mission_state = 2
 
         elif self.mission_state == 2:
@@ -70,6 +83,7 @@ class OffboardControl(Node):
             self.get_logger().info("Landing request")
             self.publish_vehicle_command_1(VehicleCommand.VEHICLE_CMD_NAV_LAND)
             self.publish_vehicle_command_2(VehicleCommand.VEHICLE_CMD_NAV_LAND)
+
             self.mission_state = 3
         
         elif self.mission_state == 3:
@@ -108,22 +122,29 @@ class OffboardControl(Node):
         msg.attitude = False
         msg.body_rate = False
         msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
+
         self.offboard_control_mode_publisher_1.publish(msg)
         self.offboard_control_mode_publisher_2.publish(msg)
-        # self.get_logger().info("Offboard Control Mode published")
 
     '''
 	Publish a trajectory setpoint
     '''
 
     def publish_trajectory_setpoint(self):
-        msg = TrajectorySetpoint()
-        msg.position = self.current_waypoint
-        msg.yaw = np.pi/2  # [-PI:PI]
-        msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
-        self.trajectory_setpoint_publisher_1.publish(msg)
-        self.trajectory_setpoint_publisher_2.publish(msg)
-        # self.get_logger().info("Trajectory Setpoint published")
+
+        msg1 = TrajectorySetpoint()
+        msg2 = TrajectorySetpoint()
+
+        msg1.position = self.drone1_waypoint
+        msg1.yaw = np.pi/2  # [-PI:PI]
+        msg1.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
+
+        msg2.position = self.drone2_waypoint
+        msg2.yaw = np.pi/2  # [-PI:PI]
+        msg2.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
+
+        self.trajectory_setpoint_publisher_1.publish(msg1)
+        self.trajectory_setpoint_publisher_2.publish(msg2)
 
     '''
     Publish vehicle commands
@@ -156,6 +177,16 @@ class OffboardControl(Node):
         msg.from_external = True
         msg.timestamp = int(Clock().now().nanoseconds / 1000) # time in microseconds
         self.vehicle_command_publisher_2.publish(msg)
+
+    def FLU2FRD_vector_converter(self):
+
+        # Rotation around X-axis of 180° Degrees
+        rotX = np.asfarray(np.array([[1, 0, 0],
+                                    [0, np.cos(np.pi), -np.sin(np.pi)], 
+                                    [0, np.sin(np.pi), np.cos(np.pi)]]), dtype = np.float32)
+        
+        self.drone1_waypoint = np.dot(rotX, self.drone1_waypoint)
+        self.drone2_waypoint = np.dot(rotX, self.drone2_waypoint)
 
 def main(args=None):
     rclpy.init(args=args)
