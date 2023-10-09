@@ -2,6 +2,8 @@
 #include <px4_msgs/msg/trajectory_setpoint.hpp>
 #include <px4_msgs/msg/vehicle_command.hpp>
 #include <px4_msgs/msg/vehicle_control_mode.hpp>
+#include <px4_msgs/msg/vehicle_status.hpp>
+#include <px4_msgs/msg/vehicle_odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <stdint.h>
@@ -17,12 +19,13 @@ using namespace std::chrono;
 using namespace std::chrono_literals;
 using namespace px4_msgs::msg;
 using namespace std;
+using std::placeholders::_1;
 
-
-#define MAP_WIDTH 240	//cm
-#define MAP_HEIGHT 120	//cm
-#define CELL_UNIT 60	//cm
-#define SUBUNIT_CELL 30 //cm
+/**GRID MAP DEFINITION: 4 by 2 cells of 60 centimeter size and subcells of size 30 centimeters*/
+#define MAP_WIDTH 400	//cm
+#define MAP_HEIGHT 200	//cm
+#define CELL_UNIT 100	//cm
+#define SUBUNIT_CELL 50 //cm
 
 //To simplify accessing neighbours cells in these directions
 enum {POS_X, NEG_Y, NEG_X, POS_Y};
@@ -86,23 +89,24 @@ public:
 
     //Sub cell with PX4 origin convention 
 
-    subcells[TOP_RIGHT].x_drone=parent_x_drone-0.15;
-    subcells[TOP_RIGHT].y_drone=parent_y_drone+0.15;
+    subcells[TOP_RIGHT].x_drone=parent_x_drone-0.25;
+    subcells[TOP_RIGHT].y_drone=parent_y_drone+0.25;
 
-    subcells[TOP_LEFT].x_drone=parent_x_drone-0.15;
-    subcells[TOP_LEFT].y_drone=parent_y_drone-0.15;
+    subcells[TOP_LEFT].x_drone=parent_x_drone-0.25;
+    subcells[TOP_LEFT].y_drone=parent_y_drone-0.25;
 
-    subcells[BOTTOM_LEFT].x_drone=parent_x_drone+0.15;
-    subcells[BOTTOM_LEFT].y_drone=parent_y_drone-0.15;
+    subcells[BOTTOM_LEFT].x_drone=parent_x_drone+0.25;
+    subcells[BOTTOM_LEFT].y_drone=parent_y_drone-0.25;
 
-    subcells[BOTTOM_RIGHT].x_drone=parent_x_drone+0.15;
-    subcells[BOTTOM_RIGHT].y_drone =parent_y_drone+0.15;
+    subcells[BOTTOM_RIGHT].x_drone=parent_x_drone+0.25;
+    subcells[BOTTOM_RIGHT].y_drone =parent_y_drone+0.25;
   }
 };
 
 class Cell
 {
   int x,y; 
+
   float x_drone, y_drone;
 
   bool visited=false;
@@ -202,24 +206,16 @@ class STC_handler
     offset_y=(dir==POS_Y)?CELL_UNIT:
       (dir==NEG_Y)?-CELL_UNIT:0;
 
-    offset_y_drone=(dir==POS_X)?0.6:
-      (dir==NEG_X)?-0.6:0;
+    offset_y_drone=(dir==POS_X)?1:
+      (dir==NEG_X)?-1:0;
 
-    offset_x_drone=(dir==POS_Y)?0.6:
-      (dir==NEG_Y)?-0.6:0;
+    offset_x_drone=(dir==POS_Y)?1:
+      (dir==NEG_Y)?-1:0;
 
-    
-
-    // std::cout << "Curr cell: " << '\n';
-    // curr_cell.display();
-
-    // std::cout <<"offset_x: " <<offset_x<<" Offest Y: "<<offset_y<< '\n';
 
     Cell search_cell(curr_cell.getX()+offset_x, curr_cell.getY()+offset_y,
                       curr_cell.getX_drone()+offset_x_drone, curr_cell.getY_drone()+offset_y_drone);
-    // std::cout << "Search cell: " << '\n';
-    // search_cell.display();
-
+    
     for(auto i=all_cells.begin(); i!=all_cells.end(); i++)
     {
       if(*i==search_cell)
@@ -250,10 +246,10 @@ class STC_handler
         {
           //Add to list of all cells
           all_cells.push_back(Cell(ii, i, x_drone, y_drone));
-          y_drone += 0.6;
+          y_drone += 1;
         }
       }
-      x_drone += 0.6;
+      x_drone += 1;
       y_drone = start_cell.getY_drone();
     }
 
@@ -353,9 +349,6 @@ class STC_handler
     // curr_cell->display();
     curr_cell->markVisited();
     spanning_tree_cells.push_back(curr_cell);
-    //writeCellToCSV(curr_cell);
-
-    // std::cout << "-----------" << '\n';
 
     for(Cell* neighbour:curr_cell->neighbours)
     {
@@ -419,6 +412,9 @@ class STC_handler
       std::cout << "CURRENT SUBCELL: " << '\n';
       i->display();
     }
+
+    std::cout << "NUMBER OF SUBCELLS: ";
+    printf("%d\n",(int) trajectory_subcells.size());
   }
 
   // Recursive function that allows to circumnavigate the spanning tree in counterclock wise direction
@@ -550,20 +546,39 @@ class STC_handler
 };
 
 
-
 class OffboardControl : public rclcpp::Node
 {
 public:
 	OffboardControl(STC_handler &handler) : Node("offboard_control")
 	{
 
+    rmw_qos_profile_t qos_profile = rmw_qos_profile_sensor_data;
+    auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, 5), qos_profile);
+
+    // rclcpp::QoS pub_qos = rclcpp::QoS(0)
+		// .reliability(RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+		// .durability(RMW_QOS_POLICY_DURABILITY_VOLATILE)
+		// .history(RMW_QOS_POLICY_HISTORY_KEEP_LAST);
+
 		offboard_control_mode_publisher_ = this->create_publisher<OffboardControlMode>("/fmu/in/offboard_control_mode", 10);
 		trajectory_setpoint_publisher_ = this->create_publisher<TrajectorySetpoint>("/fmu/in/trajectory_setpoint", 10);
 		vehicle_command_publisher_ = this->create_publisher<VehicleCommand>("/fmu/in/vehicle_command", 10);
+    vehicle_status_sub_ = this->create_subscription<VehicleStatus>("/fmu/out/vehicle_status", qos, std::bind(&OffboardControl::vehicle_status_cb, this, _1));
+    vehicle_odometry_sub_ = this->create_subscription<VehicleOdometry>("/fmu/out/vehicle_odometry", qos, std::bind(&OffboardControl::vehicle_odometry_cb, this, _1));
 
-		mission_state = 0;
+		mission_state = -1;
+    // nav_state = 0;
+    // arming_state = 0;
 
-    current_waypoint = {0.0, 0.0, 0.0};
+    counter = 0;
+
+    current_waypoint = {0.0, 0.0, -2};
+    // printf("Waypoint %d: ", counter);
+    // for(int i=0;i<3;i++)
+    //     printf("%f ",current_waypoint[i]);
+    // printf("\n");
+    counter++;
+
     trajectory_subcells_iterator = handler.getTrajectorySubcellsBegin();
     trajectory_subcells = handler.getTrajectorySubcells();
 
@@ -581,11 +596,18 @@ private:
 	rclcpp::Publisher<OffboardControlMode>::SharedPtr offboard_control_mode_publisher_;
 	rclcpp::Publisher<TrajectorySetpoint>::SharedPtr trajectory_setpoint_publisher_;
 	rclcpp::Publisher<VehicleCommand>::SharedPtr vehicle_command_publisher_;
+  rclcpp::Subscription<VehicleStatus>::SharedPtr vehicle_status_sub_;
+  rclcpp::Subscription<VehicleOdometry>::SharedPtr vehicle_odometry_sub_;
+
+  uint8_t nav_state;
+  uint8_t arming_state;
+  std::array<float,3UL> drone_position;
+  int counter;
 
 	std::atomic<uint64_t> timestamp_;   //!< common synced timestamped
 
 
-	uint64_t mission_state;   // counter to define mission as state machine
+	int64_t mission_state;   // counter to define mission as state machine
   Eigen::Matrix<double,3,1> current_waypoint;
   std::list<SubCell*>::iterator trajectory_subcells_iterator;
   std::list<SubCell*> trajectory_subcells;
@@ -597,7 +619,10 @@ private:
 	void publish_vehicle_command(uint16_t command, int param1 = 0.0, int param2 = 0.0);
   void mission_cb();
   void offboard_cb();
+  void vehicle_status_cb(const VehicleStatus::SharedPtr msg);
+  void vehicle_odometry_cb(const VehicleOdometry::SharedPtr msg);
 	Eigen::Matrix<double,3,1> FLU2FRD_vector_converter(Eigen::Matrix<double,3,1> vector);
+  Eigen::Matrix<double,3,1> ENU2NED_vector_converter(Eigen::Matrix<double,3,1> vector);
 };
 
 /**
@@ -605,11 +630,11 @@ private:
 */
 void OffboardControl::mission_cb()
 {
-    if(mission_state == 0)
-    {
-        RCLCPP_INFO(this->get_logger(), "Mission started");
-        /*  ENABLE OFFBOARD MODE
 
+    if(mission_state == -1)
+    {
+        RCLCPP_INFO(this->get_logger(), "Switching to Offboard");
+        /*  ENABLE OFFBOARD MODE
             Python implementation of Offboard Control
             param1 is set to 1 to enable the custom mode.
             param2 is set to 6 to indicate the offboard mode.
@@ -624,32 +649,87 @@ void OffboardControl::mission_cb()
             param2 = 8 (RATTITUDE)
         */
         this->publish_vehicle_command(VehicleCommand::VEHICLE_CMD_DO_SET_MODE, 1., 6.);
-        /*  ARMING THE VEHICLE AND REACHING THE FIRST WAYPOINT*/
+        if(nav_state == VehicleStatus::NAVIGATION_STATE_OFFBOARD)
+          mission_state = 0;
+
+    }else if (mission_state == 0)
+    {
         RCLCPP_INFO(this->get_logger(), "Arming");
 		    this->arm();
-        
-        mission_state = 1;
+        if (arming_state == VehicleStatus::ARMING_STATE_ARMED)
+          mission_state = 1;
+
     }else if (mission_state == 1)
     {
-        // current_waypoint = {-2.5, -2.5, 2.0};
+      // printf("\nDrone position: ");
+      // for(int i=0;i<3;i++)
+      //     printf("%f ",drone_position[i]);
+      // printf("\nSetpoint position: ");    
+      // for(int i=0;i<3;i++)
+      //     printf("%f ",current_waypoint[i]);
 
-        subcell = *trajectory_subcells_iterator;
-        Eigen::Matrix<double,3,1> c_w = {subcell->getSubCell_x_drone(), subcell->getSubCell_y_drone(), 2.0};
+      // Reach initial waypoint current_waypoint = {0.0,0.0,0.5}
+      // if the drone is below 5 cm range then compute next waypoint 
+        if(abs(drone_position[0] - current_waypoint[0]) <= 0.05 &&
+            abs(drone_position[1] - current_waypoint[1]) <= 0.05 &&
+            abs(drone_position[2] - current_waypoint[2]) <= 0.1) 
+        {
+            subcell = *trajectory_subcells_iterator;
+            Eigen::Matrix<double,3,1> c_w = {subcell->getSubCell_x_drone(), 
+            subcell->getSubCell_y_drone(), 2};
+
+            // printf("\n Waypoint before conversion %d: ", counter);
+            // for(int i=0;i<3;i++)
+            //   printf("%f ",c_w[i]);
         
-        current_waypoint = FLU2FRD_vector_converter(c_w);
+            current_waypoint = ENU2NED_vector_converter(c_w);
         
-        if(subcell == trajectory_subcells.back())
-            mission_state = 2;
-        else
+            // printf("\n Waypoint after conversion %d: ", counter);
+            // for(int i=0;i<3;i++)
+            //   printf("%f ",current_waypoint[i]);
+            counter ++;
+
             trajectory_subcells_iterator++;
-
+        }
+        
+        if (subcell == trajectory_subcells.back())
+        {
+          mission_state = 2;
+          printf("%d ", counter);
+        }
+            
+             
     }else if (mission_state == 2)
-	  {
-	  	RCLCPP_INFO(this->get_logger(), "Landing");
-	  	this->publish_vehicle_command(VehicleCommand::VEHICLE_CMD_NAV_LAND);
-	  	mission_state = 3;
+	  { 
+      //check if last waypoint is reached
+      if(abs(drone_position[0] - current_waypoint[0]) <= 0.05 &&
+              abs(drone_position[1] - current_waypoint[1]) <= 0.05 &&
+              abs(drone_position[2] - current_waypoint[2]) <= 0.1) 
+      {
+        printf("\n");
+	  	  RCLCPP_INFO(this->get_logger(), "Landing");
+	  	  
+        current_waypoint[2] = 0.0;
 
-	  }else if (mission_state == 3)
+        mission_state = 3;
+      }
+    }else if (mission_state == 3)
+    {
+      // printf("\nDrone position: ");
+      // for(int i=0;i<3;i++)
+      //     printf("%f ",drone_position[i]);
+      // printf("\nSetpoint position: ");    
+      // for(int i=0;i<3;i++)
+      //     printf("%f ",current_waypoint[i]);
+
+      float result = abs(drone_position[2] - current_waypoint[2]);
+      // printf("\nDifference = %f", result);
+      if(result <= 0.1)
+      {
+            this->publish_vehicle_command(VehicleCommand::VEHICLE_CMD_DO_FLIGHTTERMINATION, 1.0);
+	  	      mission_state = 4;
+      }
+	  }else if (mission_state == 4)
 	  {
 	  	RCLCPP_INFO(this->get_logger(), "Mission finished");
 	  	timer_offboard->cancel();
@@ -667,16 +747,46 @@ void OffboardControl::offboard_cb()
 	publish_trajectory_setpoint();
 } 
 
+void OffboardControl::vehicle_status_cb(const VehicleStatus::SharedPtr msg)
+{
+  nav_state = msg->nav_state;
+  arming_state = msg->arming_state;
+}
+
+void OffboardControl::vehicle_odometry_cb(const VehicleOdometry::SharedPtr msg)
+{
+  drone_position = msg->position;
+}
+
 /**
 * @brief Function that transforms ROS2 ENU coords to NED coords as defined in https://docs.px4.io/main/en/ros/external_position_estimation.html#reference-frames-and-ros
 */
 Eigen::Matrix<double,3,1> OffboardControl::FLU2FRD_vector_converter(Eigen::Matrix<double,3,1> vector)
 {
-
 	// Rotation around X-axis of 180° Degrees
 	Eigen::Matrix<double,3,3> rotX { {1, 0, 0}, 
 									{0, cos(M_PI), -sin(M_PI)},
 									{0, sin(M_PI), cos(M_PI)} };
+
+  //matrix*column vector
+	vector = rotX*vector;
+
+	return vector;
+}
+
+Eigen::Matrix<double,3,1> OffboardControl::ENU2NED_vector_converter(Eigen::Matrix<double,3,1> vector)
+{
+	// Rotation around Z-axis of 90° Degrees
+	Eigen::Matrix<double,3,3> rotZ { {cos(M_PI/2), -sin(M_PI/2), 0},
+									                {sin(M_PI/2), cos(M_PI/2), 0}, 
+									                {0, 0, 1} };
+
+	vector = rotZ*vector;
+
+	// Rotation around X-axis of 180° Degrees
+	Eigen::Matrix<double,3,3> rotX { {1, 0, 0}, 
+									                  {0, cos(M_PI), -sin(M_PI)},
+								                  	{0, sin(M_PI), cos(M_PI)} };
 
 	vector = rotX*vector;
 
@@ -730,6 +840,7 @@ void OffboardControl::publish_trajectory_setpoint()
 	std::array<float, 3UL> floatWaypoint;
 	for (int i = 0; i < 3; ++i) {
         floatWaypoint[i] = static_cast<float>(current_waypoint(i));
+        // printf("%f ", current_waypoint[i]);
     }
 
 	msg.position = floatWaypoint;
@@ -765,7 +876,7 @@ int main(int argc, char *argv[])
 {
 	// 1. Setups the graph with all the valid 2*D cells and their respective neighbours
 	// Values for the cell defined in centimeters
-  STC_handler handler(Cell(30, 30,-0.3,-0.9));
+  STC_handler handler(Cell(50, 50,-0.5,-1.5));
   // handler.showCells();
 
   // 2. Constructs the spanning tree starting from a given cell
@@ -787,7 +898,7 @@ int main(int argc, char *argv[])
 
   // Store in order the list of subcells for the drone to cover
   handler.circumnavigate(curr_cell, next_cell, curr_subcell, st_cell_iterator, 0);
-  handler.showTrajectoryWithSubCells();
+  // handler.showTrajectoryWithSubCells();
 
 	std::cout << "Starting offboard control node..." << std::endl;
 	setvbuf(stdout, NULL, _IONBF, BUFSIZ);
