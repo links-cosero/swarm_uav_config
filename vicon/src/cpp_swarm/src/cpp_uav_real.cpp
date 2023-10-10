@@ -734,7 +734,7 @@ void OffboardControl::mission_cb()
 	  	RCLCPP_INFO(this->get_logger(), "Mission finished");
 	  	timer_offboard->cancel();
 	  	timer_mission->cancel();
-	  	exit(1);
+	  	exit(0);
 	  }
 }
 

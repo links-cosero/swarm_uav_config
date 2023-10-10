@@ -21,9 +21,10 @@ using namespace px4_msgs::msg;
 using namespace std;
 using std::placeholders::_1;
 
-/**GRID MAP DEFINITION: 4 by 2 cells of 60 centimeter size and subcells of size 30 centimeters*/
-#define MAP_WIDTH 400	//cm
-#define MAP_HEIGHT 200	//cm
+/**GRID MAP DEFINITION: 3 by 3 cells (6 by 6 subcells) of 100 centimeter size 
+ * and subcells of size 50 centimeters*/
+#define MAP_WIDTH 300	//cm
+#define MAP_HEIGHT 300	//cm
 #define CELL_UNIT 100	//cm
 #define SUBUNIT_CELL 50 //cm
 
@@ -734,7 +735,7 @@ void OffboardControl::mission_cb()
 	  	RCLCPP_INFO(this->get_logger(), "Mission finished");
 	  	timer_offboard->cancel();
 	  	timer_mission->cancel();
-	  	exit(1);
+	  	exit(0);
 	  }
 }
 
@@ -876,7 +877,7 @@ int main(int argc, char *argv[])
 {
 	// 1. Setups the graph with all the valid 2*D cells and their respective neighbours
 	// Values for the cell defined in centimeters
-  STC_handler handler(Cell(50, 50,-0.5,-1.5));
+  STC_handler handler(Cell(50, 50,-1,-1));
   // handler.showCells();
 
   // 2. Constructs the spanning tree starting from a given cell
